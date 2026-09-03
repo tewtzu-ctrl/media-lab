@@ -29,6 +29,10 @@ MAX_SCALE = 10.0
 MIN_OPACITY = 0.0
 MAX_OPACITY = 1.0
 STILL_FPS_FALLBACK = 25.0
+# kinocut 1.15.1's compositor always renders at most 25 fps but tags the
+# output with whatever the canvas asked for, so a 30 fps canvas silently
+# loses 25/30 of its running time. Clamping keeps the duration honest.
+COMPOSITOR_MAX_FPS = 25.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,7 +43,13 @@ class BackdropResult:
     spec_path: Path
     canvas_width: int
     canvas_height: int
+    canvas_fps: float
+    source_fps: float
     backdrop_was_shorter: bool
+
+    @property
+    def fps_was_clamped(self) -> bool:
+        return self.source_fps > self.canvas_fps
 
 
 def _stage_beside_spec(source: Path, spec_dir: Path, layer_id: str) -> str:
@@ -154,7 +164,8 @@ def place_on_backdrop(
         raise MediaLabError(f"subject has no video stream: {resolved_subject}")
 
     canvas_width, canvas_height = _canvas_size(backdrop_info, width, height)
-    fps = subject_info.fps if subject_info.fps > 0 else STILL_FPS_FALLBACK
+    source_fps = subject_info.fps if subject_info.fps > 0 else STILL_FPS_FALLBACK
+    fps = min(source_fps, COMPOSITOR_MAX_FPS)
     duration = subject_info.duration_s
     if duration <= 0:
         raise MediaLabError(f"subject has no measurable duration: {resolved_subject}")
@@ -199,5 +210,7 @@ def place_on_backdrop(
         spec_path=spec_path,
         canvas_width=canvas_width,
         canvas_height=canvas_height,
+        canvas_fps=fps,
+        source_fps=source_fps,
         backdrop_was_shorter=backdrop_was_shorter,
     )

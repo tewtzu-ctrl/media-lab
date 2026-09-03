@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from ..config import Config
-from ..errors import MediaLabError, ValidationError
+from ..errors import MediaLabError, ValidationError, VerificationError
+from ..ffmpeg import measure_alpha_spread
 from ..kino import KinoRunner
 from ..paths import ensure_readable_source, ensure_writable_output
 from ..probe import MediaInfo
@@ -22,9 +23,15 @@ PEOPLE_MODEL = "u2net_human_seg"
 OBJECT_MODEL = "birefnet-general"
 QUALITY_CHOICES = ("fast", "balanced", "best")
 DEVICE_CHOICES = ("auto", "cpu", "coreml", "cuda")
-VIDEO_SUFFIX = ".webm"
+# ProRes 4444 in .mov carries alpha that ffmpeg reads natively. VP9-in-WebM
+# also carries alpha, but only the libvpx-vp9 decoder exposes it, and
+# kinocut's compositor does not request that decoder - it would silently
+# composite the subject as an opaque rectangle.
+VIDEO_SUFFIX = ".mov"
 IMAGE_SUFFIX = ".png"
 IMAGE_INPUT_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp")
+# A matte that never varies means nothing was separated from the background.
+MIN_ALPHA_SPREAD = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +43,7 @@ class CutoutResult:
     provider: str
     frames_processed: int
     ms_per_frame: float
+    alpha_spread: int
 
     @property
     def is_still(self) -> bool:
@@ -122,10 +130,17 @@ def cut_out_person(
         config,
         Expectations(requires_alpha=True, requires_audio=False),
     )
+    alpha_spread = measure_alpha_spread(resolved_output, config)
+    if alpha_spread < MIN_ALPHA_SPREAD:
+        raise VerificationError(
+            str(resolved_output),
+            ("alpha channel is uniform: nothing was separated from the background",),
+        )
     return CutoutResult(
         media=media,
         model=str(data.get("model", PEOPLE_MODEL)),
         provider=str(data.get("provider", "unknown")),
         frames_processed=_as_int(data, "framesProcessed"),
         ms_per_frame=_as_float(data, "avgMsPerFrame"),
+        alpha_spread=alpha_spread,
     )

@@ -73,7 +73,7 @@ def runner(config: Config) -> KinoRunner:
 
 
 def test_produces_a_cutout_with_alpha(tiny_clip: Path, config: Config, runner: KinoRunner) -> None:
-    result = cut_out_person(tiny_clip, config.out_dir / "cut.webm", config, runner, quality="fast")
+    result = cut_out_person(tiny_clip, config.out_dir / "cut.mov", config, runner, quality="fast")
 
     assert result.media.has_alpha is True
     assert result.model == "u2net_human_seg"
@@ -92,30 +92,30 @@ def test_rejects_a_video_output_suffix_for_a_still(
     tiny_still: Path, config: Config, runner: KinoRunner
 ) -> None:
     with pytest.raises(MediaLabError, match="must be written as .png"):
-        cut_out_person(tiny_still, config.out_dir / "cut.webm", config, runner)
+        cut_out_person(tiny_still, config.out_dir / "cut.mov", config, runner)
 
 
 def test_rejects_a_still_output_suffix_for_a_video(
     tiny_clip: Path, config: Config, runner: KinoRunner
 ) -> None:
-    with pytest.raises(MediaLabError, match="must be written as .webm"):
+    with pytest.raises(MediaLabError, match="must be written as .mov"):
         cut_out_person(tiny_clip, config.out_dir / "cut.png", config, runner)
 
 
 def test_rejects_an_unknown_quality(tiny_clip: Path, config: Config, runner: KinoRunner) -> None:
     with pytest.raises(MediaLabError, match="quality must be one of"):
-        cut_out_person(tiny_clip, config.out_dir / "cut.webm", config, runner, quality="perfect")
+        cut_out_person(tiny_clip, config.out_dir / "cut.mov", config, runner, quality="perfect")
 
 
 def test_rejects_an_unknown_device(tiny_clip: Path, config: Config, runner: KinoRunner) -> None:
     with pytest.raises(MediaLabError, match="device must be one of"):
-        cut_out_person(tiny_clip, config.out_dir / "cut.webm", config, runner, device="tpu")
+        cut_out_person(tiny_clip, config.out_dir / "cut.mov", config, runner, device="tpu")
 
 
 def test_refuses_to_overwrite_an_existing_render(
     tiny_clip: Path, config: Config, runner: KinoRunner
 ) -> None:
-    target = config.out_dir / "cut.webm"
+    target = config.out_dir / "cut.mov"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(b"already here")
 

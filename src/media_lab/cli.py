@@ -138,7 +138,7 @@ def _run_cutout(args: argparse.Namespace, config: Config, runner: KinoRunner) ->
     print(f"cutout written to {args.output}")
     print(f"  model {result.model} on {result.provider}")
     print(f"  {result.frames_processed} frames at {result.ms_per_frame:.0f} ms/frame")
-    print(f"  alpha channel present: {result.media.has_alpha}")
+    print(f"  alpha spread {result.alpha_spread}/255 (0 would mean nothing was cut)")
     return 0
 
 
@@ -158,6 +158,11 @@ def _run_backdrop(args: argparse.Namespace, config: Config, runner: KinoRunner) 
     print(f"composite written to {args.output}")
     print(f"  canvas {result.canvas_width}x{result.canvas_height}")
     print(f"  spec kept at {result.spec_path}")
+    if result.fps_was_clamped:
+        print(
+            f"  note: rendered at {result.canvas_fps:.0f} fps "
+            f"(source is {result.source_fps:.0f}); kinocut's compositor caps there"
+        )
     if result.backdrop_was_shorter:
         print("  warning: the backdrop video is shorter than the subject")
     return 0

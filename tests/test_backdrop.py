@@ -33,7 +33,7 @@ def runner(config: Config) -> KinoRunner:
 @pytest.fixture
 def subject(config: Config) -> Path:
     """A transparent subject clip, standing in for a real cutout."""
-    path = config.in_dir / "subject.webm"
+    path = config.in_dir / "subject.mov"
     _ffmpeg(
         config,
         [
@@ -41,10 +41,12 @@ def subject(config: Config) -> Path:
             "lavfi",
             "-i",
             f"testsrc=size=200x150:rate={SUBJECT_FPS}:duration={SUBJECT_SECONDS}",
+            "-vf",
+            "format=yuva444p10le",
             "-c:v",
-            "libvpx-vp9",
-            "-pix_fmt",
-            "yuva420p",
+            "prores_ks",
+            "-profile:v",
+            "4444",
             str(path),
         ],
     )

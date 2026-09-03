@@ -70,7 +70,7 @@ def run_pipeline(
     audio_dropped = False
 
     if backdrop is not None:
-        cutout = work_path(config, f"{stem}-1-cutout", ".webm")
+        cutout = work_path(config, f"{stem}-1-cutout", ".mov")
         cut_out_person(current, cutout, config, runner, quality=cutout_quality, force=True)
         stages.append(Stage("cutout", cutout))
 

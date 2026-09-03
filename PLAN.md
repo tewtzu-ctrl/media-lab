@@ -287,3 +287,18 @@ planului până zici tu:
 7. **Pas nou, neprevăzut: `recipes/audio_attach.py`** (Pas 7). Compositing-ul
    scoate audio, deci vocea originală trebuie reatașată înainte de mixul cu
    muzică. Nu era în planul inițial.
+
+8. **Compositorul kinocut plafonează la 25 fps** (Pas 3, descoperit pe material
+   real). Randează maximum 25 fps dar etichetează stream-ul cu fps-ul cerut,
+   deci un clip de 30fps ieșea 5.37s în loc de 6.43s. Măsurat sistematic:
+   durata x 30 cerut -> durata x 25 cadre. `backdrop.py` plafonează canvas-ul
+   și raportează. Stratul de verificare a prins problema.
+
+9. **Cutout-ul video s-a mutat de pe .webm pe .mov/ProRes 4444** (Pas 2,
+   descoperit pe material real). Alpha-ul VP9 exista, dar doar decodorul
+   `libvpx-vp9` îl expune, iar compositorul kinocut nu îl cere - compunea
+   subiectul ca dreptunghi opac peste fundal. ProRes are alpha citit nativ.
+
+10. **Verificare nouă: `measure_alpha_spread`** (Pas 2). Prezenta canalului
+    alpha nu garanta ca exista un matte. Se masoara acum ca alpha chiar
+    variaza; un matte uniform ridica VerificationError.

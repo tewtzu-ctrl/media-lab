@@ -157,7 +157,7 @@ def test_stops_at_the_failing_stage_and_keeps_what_ran(
             music=broken_music,
         )
 
-    assert (config.work_dir / "final-1-cutout.webm").is_file()
+    assert (config.work_dir / "final-1-cutout.mov").is_file()
     assert (config.work_dir / "final-2-backdrop.mp4").is_file()
     assert not (config.out_dir / "final.mp4").exists()
 

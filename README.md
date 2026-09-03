@@ -118,6 +118,18 @@ The suite performs real renders, so it takes a few minutes.
   `kinocut[object-matte]` extra, which is not in the published 1.15.0 wheel.
   Person cutouts (`u2net_human_seg`) work and are hardware-accelerated
   through CoreML.
+- **Cutouts are written as ProRes 4444 `.mov`, not WebM.** VP9-in-WebM does
+  carry alpha, but only ffmpeg's `libvpx-vp9` decoder exposes it, and
+  kinocut's compositor does not request that decoder - it would silently
+  composite the subject as an opaque rectangle over the backdrop. ProRes
+  alpha is read natively. The files are large; they live in `work/`.
+- **The compositor caps at 25 fps.** kinocut 1.15.1 renders at most 25 fps but
+  tags the output with whatever the canvas asked for, so a 30 fps source came
+  out 5.37s instead of 6.43s. `backdrop` clamps the canvas fps and says so.
+  Motion is 25 fps; the running time stays correct.
+- **The cutout model keeps people, not what they hold.** `u2net_human_seg`
+  segments the person; a sign, a product or a prop in their hands is cut away
+  with the background. There is no person-plus-object model in this install.
 - **Cutout speed** is roughly 125 ms per frame on an M2, so a 30-second clip
   at 30 fps takes about two minutes.
 - `video-body-swap` exists in kinocut but is deliberately not exposed here.
