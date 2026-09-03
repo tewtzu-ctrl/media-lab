@@ -64,6 +64,8 @@ def _collect_problems(info: MediaInfo, expected: Expectations) -> tuple[str, ...
         problems.append("audio stream present but none expected")
     if expected.requires_alpha is True and not info.has_alpha:
         problems.append(f"no alpha channel (pixel format is {info.pixel_format or 'unknown'})")
+    if expected.requires_alpha is False and info.has_alpha:
+        problems.append("alpha channel present but none expected")
 
     if expected.duration_s is not None:
         drift = abs(info.duration_s - expected.duration_s)

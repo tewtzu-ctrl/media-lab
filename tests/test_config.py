@@ -73,3 +73,16 @@ def test_config_is_immutable(tmp_path: Path, bin_dir: Path) -> None:
 
     with pytest.raises(AttributeError):
         config.kino_timeout_s = 5  # type: ignore[misc]
+
+
+def test_rejects_nested_media_directories(tmp_path: Path, bin_dir: Path) -> None:
+    """Overlapping directories must fail at startup, not on the first write."""
+    (tmp_path / "in").mkdir()
+    with pytest.raises(ConfigError, match="nested"):
+        load_config(root=tmp_path, env=_env(MEDIA_LAB_OUT_DIR="./in/out"))
+
+
+def test_rejects_identical_media_directories(tmp_path: Path, bin_dir: Path) -> None:
+    (tmp_path / "in").mkdir()
+    with pytest.raises(ConfigError, match="same path"):
+        load_config(root=tmp_path, env=_env(MEDIA_LAB_OUT_DIR="./in"))

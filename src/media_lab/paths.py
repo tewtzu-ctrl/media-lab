@@ -44,6 +44,12 @@ def ensure_writable_output(path: Path | str, config: Config, *, force: bool = Fa
         raise PathSafetyError(
             f"refusing to write inside the source directory {config.in_dir}: {resolved}"
         )
+    allowed_roots = (config.root, config.out_dir, config.work_dir)
+    if not any(_is_within(resolved, root) for root in allowed_roots):
+        raise PathSafetyError(
+            f"refusing to write outside the project: {resolved}. "
+            f"Renders belong under {config.out_dir} or {config.work_dir}."
+        )
     if resolved.is_dir():
         raise PathSafetyError(f"output path is a directory: {resolved}")
     if resolved.exists() and not force:
@@ -54,8 +60,17 @@ def ensure_writable_output(path: Path | str, config: Config, *, force: bool = Fa
 
 
 def work_path(config: Config, stem: str, suffix: str) -> Path:
-    """A path for a pipeline intermediate, kept for inspection."""
+    """A path for a pipeline intermediate file, kept for inspection."""
     if not suffix.startswith("."):
         raise PathSafetyError(f"suffix must start with a dot, got {suffix!r}")
     config.work_dir.mkdir(parents=True, exist_ok=True)
     return config.work_dir / f"{stem}{suffix}"
+
+
+def work_directory(config: Config, name: str) -> Path:
+    """A directory under work/ for a stage that needs several files together."""
+    if not name:
+        raise PathSafetyError("work directory name must not be empty")
+    target = config.work_dir / name
+    target.mkdir(parents=True, exist_ok=True)
+    return target

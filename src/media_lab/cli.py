@@ -77,6 +77,9 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline.add_argument("--aspect", choices=sorted(ASPECT_RATIOS), default="9:16")
     pipeline.add_argument("--cutout-quality", choices=QUALITY_CHOICES, default="balanced")
     pipeline.add_argument("--target-lufs", type=float, default=-16.0)
+    pipeline.add_argument(
+        "--fail-on-warning", action="store_true", help="Fail if the quality gate warns"
+    )
 
     return parser
 
@@ -163,6 +166,13 @@ def _run_backdrop(args: argparse.Namespace, config: Config, runner: KinoRunner) 
             f"  note: rendered at {result.canvas_fps:.0f} fps "
             f"(source is {result.source_fps:.0f}); kinocut's compositor caps there"
         )
+    if result.subject_overflows_canvas:
+        print(
+            f"  warning: subject is {result.subject_width}x{result.subject_height}, "
+            f"larger than the {result.canvas_width}x{result.canvas_height} canvas; it is cropped"
+        )
+    if result.subject_aspect_differs:
+        print("  warning: subject and canvas have different shapes; framing shifts")
     if result.backdrop_was_shorter:
         print("  warning: the backdrop video is shorter than the subject")
     return 0

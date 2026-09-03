@@ -78,3 +78,15 @@ def test_run_json_surfaces_a_reported_failure(
 
     with pytest.raises(KinoError, match="bad spec"):
         KinoRunner.from_config(config).run_json(["composite-layers", "--spec", "x.json"])
+
+
+def test_extract_json_skips_braces_in_leading_log_noise() -> None:
+    """A warning line containing braces must not hide the real payload."""
+    noisy = 'warn: layer {bad} skipped\n{"success": true, "data": {}}'
+
+    assert _extract_json_object(noisy) == {"success": True, "data": {}}
+
+
+def test_extract_json_handles_several_decoy_braces() -> None:
+    noisy = '{oops\n{also bad\n{"ok": 1}'
+    assert _extract_json_object(noisy) == {"ok": 1}

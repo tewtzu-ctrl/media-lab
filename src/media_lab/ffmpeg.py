@@ -7,6 +7,7 @@ the music bed is built here instead.
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 from dataclasses import dataclass
@@ -21,6 +22,10 @@ SILENT_LUFS = -70.0
 ALPHA_STAT_PATTERN = re.compile(r"lavfi\.signalstats\.Y(MIN|MAX)=(\d+)")
 # ffmpeg's native vp9 decoder does not expose the alpha plane; libvpx-vp9 does.
 VP9_ALPHA_DECODER = "libvpx-vp9"
+# Recipes only ever write ProRes .mov cutouts, so the WebM branch below is
+# reachable only by direct callers of this function. It is kept because the
+# alpha it decodes is otherwise invisible.
+ALPHA_SAMPLE_FRAMES = 12
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,8 +64,6 @@ def measure_integrated_loudness(path: Path, config: Config) -> float:
     if match is None:
         raise FFmpegError(("loudnorm",), 0, f"no loudness statistics reported for {path}")
 
-    import json
-
     try:
         stats = json.loads(match.group(0))
     except json.JSONDecodeError as exc:
@@ -76,11 +79,12 @@ def measure_integrated_loudness(path: Path, config: Config) -> float:
 
 
 def measure_alpha_spread(path: Path, config: Config) -> int:
-    """Return how far the alpha channel varies across one frame, on a 0-255 scale.
+    """Return the widest alpha variation seen across the clip, on a 0-255 scale.
 
     A cutout whose alpha never varies carries no matte at all: the subject was
-    never separated from its background. That still renders and probes as a
-    valid file, so it has to be measured rather than assumed.
+    never separated from its background. Sampling several frames spread over
+    the clip avoids both false alarms (the subject enters after frame one) and
+    blind spots (the matte collapses part way through).
     """
     args = ["-hide_banner"]
     if path.suffix.lower() == ".webm":
@@ -91,16 +95,18 @@ def measure_alpha_spread(path: Path, config: Config) -> int:
         # Normalising to 8-bit first keeps the statistics on one scale whatever
         # bit depth the source carries.
         "-vf",
-        "format=yuva444p,alphaextract,signalstats,metadata=print",
+        f"format=yuva444p,alphaextract,thumbnail={ALPHA_SAMPLE_FRAMES},signalstats,metadata=print",
         "-frames:v",
-        "1",
+        str(ALPHA_SAMPLE_FRAMES),
         "-f",
         "null",
         "-",
     ]
     stderr = run_ffmpeg(args, config, timeout_s=DEFAULT_FFMPEG_TIMEOUT_S).stderr
 
-    found = dict(ALPHA_STAT_PATTERN.findall(stderr))
-    if "MIN" not in found or "MAX" not in found:
+    readings = ALPHA_STAT_PATTERN.findall(stderr)
+    minimums = [int(value) for kind, value in readings if kind == "MIN"]
+    maximums = [int(value) for kind, value in readings if kind == "MAX"]
+    if not minimums or not maximums:
         raise FFmpegError(("alphaextract",), 0, f"no alpha statistics reported for {path}")
-    return int(found["MAX"]) - int(found["MIN"])
+    return max(maximums) - min(minimums)

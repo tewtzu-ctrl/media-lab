@@ -99,11 +99,13 @@ class KinoRunner:
 
 
 def _extract_json_object(stdout: str) -> dict[str, Any]:
-    """Pull the JSON object out of kino stdout, tolerating leading log noise."""
+    """Pull the JSON object out of kino stdout, tolerating leading log noise.
+
+    Log lines can themselves contain braces, so every brace position is a
+    candidate: the first one that parses wins.
+    """
     candidates = [stdout.strip()]
-    start = stdout.find("{")
-    if start > 0:
-        candidates.append(stdout[start:])
+    candidates += [stdout[index:] for index, char in enumerate(stdout) if char == "{"]
 
     for candidate in candidates:
         if not candidate:

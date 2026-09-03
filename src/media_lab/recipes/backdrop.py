@@ -14,10 +14,11 @@ from pathlib import Path
 from typing import Any
 
 from ..config import Config
-from ..errors import MediaLabError, ValidationError
+from ..errors import MediaLabError
 from ..kino import KinoRunner
-from ..paths import ensure_readable_source, ensure_writable_output, work_path
+from ..paths import ensure_readable_source, ensure_writable_output, work_directory
 from ..probe import MediaInfo, probe
+from ..validation import check_range
 from ..verify import Expectations, verify_render
 
 IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
@@ -26,6 +27,7 @@ SUBJECT_LAYER_ID = "subject"
 DEFAULT_BACKGROUND = "#000000"
 MIN_SCALE = 0.01
 MAX_SCALE = 10.0
+SUBJECT_COVERAGE_TOLERANCE = 0.05
 MIN_OPACITY = 0.0
 MAX_OPACITY = 1.0
 STILL_FPS_FALLBACK = 25.0
@@ -45,7 +47,23 @@ class BackdropResult:
     canvas_height: int
     canvas_fps: float
     source_fps: float
+    subject_width: int
+    subject_height: int
     backdrop_was_shorter: bool
+
+    @property
+    def subject_overflows_canvas(self) -> bool:
+        """True when the subject is larger than the canvas and will be cropped."""
+        return self.subject_width > self.canvas_width or self.subject_height > self.canvas_height
+
+    @property
+    def subject_aspect_differs(self) -> bool:
+        """True when subject and canvas have different shapes, so framing shifts."""
+        if 0 in (self.subject_height, self.canvas_height):
+            return False
+        subject = self.subject_width / self.subject_height
+        canvas = self.canvas_width / self.canvas_height
+        return abs(subject - canvas) / canvas > SUBJECT_COVERAGE_TOLERANCE
 
     @property
     def fps_was_clamped(self) -> bool:
@@ -61,23 +79,20 @@ def _stage_beside_spec(source: Path, spec_dir: Path, layer_id: str) -> str:
     """
     spec_dir.mkdir(parents=True, exist_ok=True)
     staged = spec_dir / f"{layer_id}{source.suffix}"
-    if staged.exists():
-        staged.unlink()
     try:
-        os.link(source, staged)
-    except OSError:
-        shutil.copy2(source, staged)
+        if staged.exists():
+            staged.unlink()
+        try:
+            os.link(source, staged)
+        except OSError:
+            shutil.copy2(source, staged)
+    except OSError as exc:
+        raise MediaLabError(f"could not stage {source} next to the spec: {exc}") from exc
     return staged.name
 
 
 def _layer_type(path: Path) -> str:
     return "image" if path.suffix.lower() in IMAGE_SUFFIXES else "video"
-
-
-def _check_range(value: float, low: float, high: float, label: str) -> float:
-    if not low <= value <= high:
-        raise ValidationError(f"{label} must be between {low} and {high}, got {value}")
-    return value
 
 
 def _canvas_size(backdrop: MediaInfo, width: int | None, height: int | None) -> tuple[int, int]:
@@ -155,8 +170,8 @@ def place_on_backdrop(
     resolved_subject = ensure_readable_source(subject)
     resolved_backdrop = ensure_readable_source(backdrop)
     resolved_output = ensure_writable_output(output, config, force=force)
-    _check_range(scale, MIN_SCALE, MAX_SCALE, "scale")
-    _check_range(opacity, MIN_OPACITY, MAX_OPACITY, "opacity")
+    check_range(scale, MIN_SCALE, MAX_SCALE, "scale")
+    check_range(opacity, MIN_OPACITY, MAX_OPACITY, "opacity")
 
     subject_info = probe(resolved_subject, config)
     backdrop_info = probe(resolved_backdrop, config)
@@ -173,7 +188,7 @@ def place_on_backdrop(
     is_still_backdrop = _layer_type(resolved_backdrop) == "image"
     backdrop_was_shorter = not is_still_backdrop and 0 < backdrop_info.duration_s < duration
 
-    spec_dir = work_path(config, resolved_output.stem, ".d")
+    spec_dir = work_directory(config, f"{resolved_output.stem}.d")
     staged_backdrop = _stage_beside_spec(resolved_backdrop, spec_dir, BACKDROP_LAYER_ID)
     staged_subject = _stage_beside_spec(resolved_subject, spec_dir, SUBJECT_LAYER_ID)
 
@@ -212,5 +227,7 @@ def place_on_backdrop(
         canvas_height=canvas_height,
         canvas_fps=fps,
         source_fps=source_fps,
+        subject_width=subject_info.width,
+        subject_height=subject_info.height,
         backdrop_was_shorter=backdrop_was_shorter,
     )

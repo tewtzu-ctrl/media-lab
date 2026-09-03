@@ -72,3 +72,38 @@ def test_work_path_requires_a_dotted_suffix(config: Config) -> None:
 
 def test_work_path_lands_in_the_work_directory(config: Config) -> None:
     assert work_path(config, "stage", ".mp4") == config.work_dir / "stage.mp4"
+
+
+def test_refuses_to_write_outside_the_project(config: Config, tmp_path: Path) -> None:
+    """An absolute path elsewhere on disk must not become a render target."""
+    outside = tmp_path.parent / "escaped.mp4"
+
+    with pytest.raises(PathSafetyError, match="outside the project"):
+        ensure_writable_output(outside, config)
+
+
+def test_refuses_a_relative_path_that_climbs_out(config: Config) -> None:
+    with pytest.raises(PathSafetyError, match="outside the project"):
+        ensure_writable_output("../../escaped.mp4", config)
+
+
+def test_accepts_a_path_under_the_work_directory(config: Config) -> None:
+    target = ensure_writable_output(config.work_dir / "stage.mp4", config)
+    assert target.parent == config.work_dir
+
+
+def test_work_directory_is_created_and_reusable(config: Config) -> None:
+    from media_lab.paths import work_directory
+
+    first = work_directory(config, "stage.d")
+    second = work_directory(config, "stage.d")
+
+    assert first == second
+    assert first.is_dir()
+
+
+def test_work_directory_rejects_an_empty_name(config: Config) -> None:
+    from media_lab.paths import work_directory
+
+    with pytest.raises(PathSafetyError, match="must not be empty"):
+        work_directory(config, "")

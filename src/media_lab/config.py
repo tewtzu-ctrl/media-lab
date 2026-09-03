@@ -90,6 +90,26 @@ def _check_binaries(ffmpeg_dir: Path) -> None:
         )
 
 
+def _check_directories_are_distinct(in_dir: Path, out_dir: Path, work_dir: Path) -> None:
+    """Overlapping directories only fail much later, on the first write."""
+    named = (
+        ("MEDIA_LAB_IN_DIR", in_dir),
+        ("MEDIA_LAB_OUT_DIR", out_dir),
+        ("MEDIA_LAB_WORK_DIR", work_dir),
+    )
+    for first_name, first in named:
+        for second_name, second in named:
+            if first_name >= second_name:
+                continue
+            if first == second:
+                raise ConfigError(f"{first_name} and {second_name} point at the same path: {first}")
+            if first in second.parents or second in first.parents:
+                raise ConfigError(
+                    f"{first_name} ({first}) and {second_name} ({second}) are nested; "
+                    "they must be separate directories"
+                )
+
+
 def load_config(
     root: Path | None = None,
     env: Mapping[str, str] | None = None,
@@ -109,6 +129,7 @@ def load_config(
 
     out_dir = _resolve_dir(project_root, merged.get("MEDIA_LAB_OUT_DIR", DEFAULT_OUT_DIR))
     work_dir = _resolve_dir(project_root, merged.get("MEDIA_LAB_WORK_DIR", DEFAULT_WORK_DIR))
+    _check_directories_are_distinct(in_dir, out_dir, work_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
 

@@ -93,3 +93,123 @@ def test_cutout_reports_a_failure_as_a_message_not_a_traceback(
 
     assert cli.main(["cutout", "in/definitely-absent.mp4", "-o", "out/x.webm"]) == 1
     assert "does not exist" in capsys.readouterr().err
+
+
+@pytest.fixture
+def cli_project(tmp_path: Path, bin_dir: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A throwaway project directory the CLI can be driven inside."""
+    import subprocess
+
+    (tmp_path / "in").mkdir()
+    clip = tmp_path / "in" / "clip.mp4"
+    subprocess.run(
+        [
+            str(bin_dir / "ffmpeg"),
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=160x120:rate=6:duration=1",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=440:duration=1",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-c:a",
+            "aac",
+            "-shortest",
+            str(clip),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    monkeypatch.setenv("MEDIA_LAB_FFMPEG_DIR", str(bin_dir))
+    monkeypatch.setenv(
+        "MCP_VIDEO_HYPERFRAMES_COMMAND",
+        str(Path(__file__).resolve().parent.parent / "node_modules" / ".bin" / "hyperframes"),
+    )
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+def test_filter_handler_renders_and_reports(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    exit_code = cli.main(["filter", "in/clip.mp4", "-o", "out/graded.mp4", "--look", "noir"])
+
+    assert exit_code == 0
+    assert "look written to" in capsys.readouterr().out
+    assert (cli_project / "out" / "graded.mp4").is_file()
+
+
+def test_filter_handler_chains_two_looks(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    exit_code = cli.main(
+        ["filter", "in/clip.mp4", "-o", "out/g.mp4", "--look", "warm", "--then", "grain"]
+    )
+
+    assert exit_code == 0
+    assert (cli_project / "out" / "g.mp4").is_file()
+
+
+def test_short_handler_reports_the_quality_gate(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    exit_code = cli.main(["short", "in/clip.mp4", "-o", "out/vertical.mp4"])
+
+    printed = capsys.readouterr().out
+    assert exit_code == 0
+    assert "short written to" in printed
+    assert "quality score" in printed
+
+
+def test_music_handler_reports_measured_loudness(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import subprocess
+
+    music = cli_project / "in" / "song.m4a"
+    subprocess.run(
+        [
+            str(Path(__file__).resolve().parent.parent / "bin" / "ffmpeg"),
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=220:duration=2",
+            "-c:a",
+            "aac",
+            str(music),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+    exit_code = cli.main(["music", "in/clip.mp4", "-o", "out/mix.mp4", "--track", "in/song.m4a"])
+
+    printed = capsys.readouterr().out
+    assert exit_code == 0
+    assert "measured loudness" in printed
+    assert "ducking engaged: True" in printed
+
+
+def test_handler_refuses_to_write_outside_the_project(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    exit_code = cli.main(["filter", "in/clip.mp4", "-o", "/tmp/escaped.mp4", "--look", "noir"])
+
+    assert exit_code == 1
+    assert "outside the project" in capsys.readouterr().err
+
+
+def test_pipeline_accepts_the_quality_gate_flag() -> None:
+    args = cli.build_parser().parse_args(["pipeline", "c.mp4", "-o", "o.mp4", "--fail-on-warning"])
+    assert args.fail_on_warning is True

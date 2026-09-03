@@ -75,7 +75,11 @@ drops, music bed, vertical export. Stages you do not ask for are skipped —
 without `--bg` there is no cutout, and a clip that only needs reframing keeps
 its original audio untouched.
 
-Nothing overwrites an existing file unless you pass `--force`.
+Nothing overwrites an existing file unless you pass `--force`, and no render
+can be written outside the project directory at all.
+
+`pipeline` and `short` both accept `--fail-on-warning`, which turns a failed
+quality gate into a non-zero exit instead of a printed warning.
 
 ## Layout
 

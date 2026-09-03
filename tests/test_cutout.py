@@ -131,3 +131,20 @@ def test_rejects_a_missing_source(config: Config, runner: KinoRunner) -> None:
 def test_object_model_is_named_but_not_offered() -> None:
     """Object cutouts need kinocut[object-matte], which this project does not install."""
     assert OBJECT_MODEL == "birefnet-general"
+
+
+def test_rejects_a_payload_with_a_renamed_field() -> None:
+    """A kinocut field rename must surface, not be silently defaulted to zero."""
+    from media_lab.recipes.cutout import _require_number, _require_str
+
+    with pytest.raises(MediaLabError, match="is not a number"):
+        _require_number({"frames_processed": 10}, "framesProcessed")
+    with pytest.raises(MediaLabError, match="is not a string"):
+        _require_str({"model": None}, "model")
+
+
+def test_rejects_a_boolean_where_a_number_is_expected() -> None:
+    from media_lab.recipes.cutout import _require_number
+
+    with pytest.raises(MediaLabError, match="is not a number"):
+        _require_number({"framesProcessed": True}, "framesProcessed")

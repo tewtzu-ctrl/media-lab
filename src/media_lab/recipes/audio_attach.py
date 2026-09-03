@@ -39,6 +39,10 @@ def attach_audio(
     if not audio_info.has_audio:
         raise ValidationError(f"no audio stream to take from {resolved_audio}")
 
+    # The video stream is copied, not re-encoded: every file this is used on
+    # comes from an earlier stage of our own pipeline and is already H.264 in
+    # MP4. ffmpeg fails loudly if a future stage produces something the
+    # container cannot hold, and verify_render catches a missing output.
     run_ffmpeg(
         [
             "-i",

@@ -17,6 +17,7 @@ from ..errors import ValidationError
 from ..ffmpeg import measure_integrated_loudness, run_ffmpeg
 from ..paths import ensure_readable_source, ensure_writable_output
 from ..probe import MediaInfo, probe
+from ..validation import check_range
 from ..verify import Expectations, verify_render
 
 MIN_TARGET_LUFS = -70.0
@@ -51,12 +52,6 @@ class AudioBedResult:
     media: MediaInfo
     measured_lufs: float
     ducking_engaged: bool
-
-
-def _check_range(value: float, low: float, high: float, label: str) -> float:
-    if not low <= value <= high:
-        raise ValidationError(f"{label} must be between {low} and {high}, got {value}")
-    return value
 
 
 def _duck_filtergraph(
@@ -105,14 +100,14 @@ def add_music_bed(
     resolved_source = ensure_readable_source(source)
     resolved_music = ensure_readable_source(music)
     resolved_output = ensure_writable_output(output, config, force=force)
-    _check_range(target_lufs, MIN_TARGET_LUFS, MAX_TARGET_LUFS, "target_lufs")
-    _check_range(music_volume, MIN_MUSIC_VOLUME, MAX_MUSIC_VOLUME, "music_volume")
-    _check_range(duck_ratio, MIN_DUCK_RATIO, MAX_DUCK_RATIO, "duck_ratio")
+    check_range(target_lufs, MIN_TARGET_LUFS, MAX_TARGET_LUFS, "target_lufs")
+    check_range(music_volume, MIN_MUSIC_VOLUME, MAX_MUSIC_VOLUME, "music_volume")
+    check_range(duck_ratio, MIN_DUCK_RATIO, MAX_DUCK_RATIO, "duck_ratio")
     # These are interpolated into an ffmpeg filtergraph, so they are bounded
     # here rather than passed through as free-form text.
-    _check_range(duck_threshold, MIN_DUCK_THRESHOLD, MAX_DUCK_THRESHOLD, "duck_threshold")
-    _check_range(duck_attack_ms, MIN_DUCK_TIME_MS, MAX_DUCK_ATTACK_MS, "duck_attack_ms")
-    _check_range(duck_release_ms, MIN_DUCK_TIME_MS, MAX_DUCK_RELEASE_MS, "duck_release_ms")
+    check_range(duck_threshold, MIN_DUCK_THRESHOLD, MAX_DUCK_THRESHOLD, "duck_threshold")
+    check_range(duck_attack_ms, MIN_DUCK_TIME_MS, MAX_DUCK_ATTACK_MS, "duck_attack_ms")
+    check_range(duck_release_ms, MIN_DUCK_TIME_MS, MAX_DUCK_RELEASE_MS, "duck_release_ms")
 
     source_info = probe(resolved_source, config)
     if source_info.duration_s <= 0:

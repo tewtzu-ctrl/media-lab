@@ -141,7 +141,11 @@ LOOKS: Mapping[str, LookSpec] = MappingProxyType(
 def _ensure_within_bounds(
     value: float, bounds: tuple[float, float], label: str, look_name: str
 ) -> None:
-    """Raise ValidationError if a baked-in look parameter drifted out of range."""
+    """Raise ValidationError if a baked-in look parameter drifted out of range.
+
+    Deliberately not validation.check_range: this guards the catalogue itself
+    rather than a caller argument, so the message names the offending look.
+    """
     lo, hi = bounds
     if not lo <= value <= hi:
         raise ValidationError(

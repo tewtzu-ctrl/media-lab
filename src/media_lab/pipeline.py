@@ -24,6 +24,10 @@ from .recipes.to_short import QualityReport, to_short
 
 DEFAULT_ASPECT_RATIO = "9:16"
 DEFAULT_CUTOUT_QUALITY = "balanced"
+# Intermediates are addressed by the final render's name, so re-running the
+# pipeline for the same output deliberately rewrites its own working files.
+# The caller's `force` still guards the final render.
+OVERWRITE_INTERMEDIATES = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +61,7 @@ def run_pipeline(
     aspect_ratio: str = DEFAULT_ASPECT_RATIO,
     cutout_quality: str = DEFAULT_CUTOUT_QUALITY,
     target_lufs: float = DEFAULT_TARGET_LUFS,
+    fail_on_warning: bool = False,
     force: bool = False,
 ) -> PipelineResult:
     """Take one clip from raw footage to a finished vertical social post."""
@@ -71,35 +76,45 @@ def run_pipeline(
 
     if backdrop is not None:
         cutout = work_path(config, f"{stem}-1-cutout", ".mov")
-        cut_out_person(current, cutout, config, runner, quality=cutout_quality, force=True)
+        cut_out_person(
+            current, cutout, config, runner, quality=cutout_quality, force=OVERWRITE_INTERMEDIATES
+        )
         stages.append(Stage("cutout", cutout))
 
         composed = work_path(config, f"{stem}-2-backdrop", ".mp4")
-        place_on_backdrop(cutout, backdrop, composed, config, runner, force=True)
+        place_on_backdrop(cutout, backdrop, composed, config, runner, force=OVERWRITE_INTERMEDIATES)
         stages.append(Stage("backdrop", composed))
         current = composed
         audio_dropped = True
 
     if look is not None:
         graded = work_path(config, f"{stem}-3-look", ".mp4")
-        apply_look(current, graded, look, config, runner, force=True)
+        apply_look(current, graded, look, config, runner, force=OVERWRITE_INTERMEDIATES)
         stages.append(Stage("look", graded))
         current = graded
 
     if audio_dropped and source_info.has_audio:
         voiced = work_path(config, f"{stem}-4-voice", ".mp4")
-        attach_audio(current, resolved_source, voiced, config, force=True)
+        attach_audio(current, resolved_source, voiced, config, force=OVERWRITE_INTERMEDIATES)
         stages.append(Stage("voice", voiced))
         current = voiced
 
     if music is not None:
         mixed = work_path(config, f"{stem}-5-music", ".mp4")
-        add_music_bed(current, music, mixed, config, target_lufs=target_lufs, force=True)
+        add_music_bed(
+            current, music, mixed, config, target_lufs=target_lufs, force=OVERWRITE_INTERMEDIATES
+        )
         stages.append(Stage("music", mixed))
         current = mixed
 
     short = to_short(
-        current, resolved_output, config, runner, aspect_ratio=aspect_ratio, force=force
+        current,
+        resolved_output,
+        config,
+        runner,
+        aspect_ratio=aspect_ratio,
+        fail_on_warning=fail_on_warning,
+        force=force,
     )
     stages.append(Stage("short", resolved_output))
 

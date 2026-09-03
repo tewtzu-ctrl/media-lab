@@ -17,6 +17,7 @@ from ..ffmpeg import measure_alpha_spread
 from ..kino import KinoRunner
 from ..paths import ensure_readable_source, ensure_writable_output
 from ..probe import MediaInfo
+from ..validation import check_choice
 from ..verify import Expectations, verify_render
 
 PEOPLE_MODEL = "u2net_human_seg"
@@ -50,12 +51,6 @@ class CutoutResult:
         return self.frames_processed <= 1
 
 
-def _validate_choice(value: str, allowed: tuple[str, ...], label: str) -> str:
-    if value not in allowed:
-        raise ValidationError(f"{label} must be one of {', '.join(allowed)}, got {value!r}")
-    return value
-
-
 def _expected_suffix(source: Path) -> str:
     return IMAGE_SUFFIX if source.suffix.lower() in IMAGE_INPUT_SUFFIXES else VIDEO_SUFFIX
 
@@ -78,18 +73,19 @@ def _read_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def _as_float(data: dict[str, Any], key: str) -> float:
+def _require_number(data: dict[str, Any], key: str) -> float:
+    """Missing or mistyped fields mean kinocut changed shape; say so loudly."""
     value = data.get(key)
-    if isinstance(value, (int, float)):
-        return float(value)
-    return 0.0
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise MediaLabError(f"remove-background field {key!r} is not a number: {value!r}")
+    return float(value)
 
 
-def _as_int(data: dict[str, Any], key: str) -> int:
+def _require_str(data: dict[str, Any], key: str) -> str:
     value = data.get(key)
-    if isinstance(value, int):
-        return value
-    return 0
+    if not isinstance(value, str):
+        raise MediaLabError(f"remove-background field {key!r} is not a string: {value!r}")
+    return value
 
 
 def cut_out_person(
@@ -106,8 +102,8 @@ def cut_out_person(
     resolved_source = ensure_readable_source(source)
     resolved_output = ensure_writable_output(output, config, force=force)
     _validate_output_suffix(resolved_source, resolved_output)
-    _validate_choice(quality, QUALITY_CHOICES, "quality")
-    _validate_choice(device, DEVICE_CHOICES, "device")
+    check_choice(quality, QUALITY_CHOICES, "quality")
+    check_choice(device, DEVICE_CHOICES, "device")
 
     payload = runner.run_json(
         [
@@ -138,9 +134,9 @@ def cut_out_person(
         )
     return CutoutResult(
         media=media,
-        model=str(data.get("model", PEOPLE_MODEL)),
-        provider=str(data.get("provider", "unknown")),
-        frames_processed=_as_int(data, "framesProcessed"),
-        ms_per_frame=_as_float(data, "avgMsPerFrame"),
+        model=_require_str(data, "model"),
+        provider=_require_str(data, "provider"),
+        frames_processed=int(_require_number(data, "framesProcessed")),
+        ms_per_frame=_require_number(data, "avgMsPerFrame"),
         alpha_spread=alpha_spread,
     )

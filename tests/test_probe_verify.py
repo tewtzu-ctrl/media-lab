@@ -184,3 +184,102 @@ def test_alpha_mode_tag_matching_is_case_insensitive() -> None:
     assert _has_alpha_mode_tag({"alpha_mode": "0"}) is False
     assert _has_alpha_mode_tag({"ENCODER": "x"}) is False
     assert _has_alpha_mode_tag(None) is False
+
+
+def test_verify_reports_unexpected_alpha(config: Config, tmp_path: Path) -> None:
+    """requires_alpha=False is enforced, symmetrically with requires_audio."""
+    import subprocess
+
+    target = config.out_dir / "alpha.mov"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            str(config.ffmpeg),
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=160x120:rate=10:duration=1",
+            "-vf",
+            "format=yuva444p10le",
+            "-c:v",
+            "prores_ks",
+            "-profile:v",
+            "4444",
+            str(target),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+    with pytest.raises(VerificationError, match="alpha channel present but none expected"):
+        verify_render(target, config, Expectations(requires_alpha=False))
+
+
+def test_alpha_spread_is_zero_for_a_fully_opaque_clip(config: Config) -> None:
+    """A matte that never varies is exactly what the cutout guard must catch."""
+    import subprocess
+
+    from media_lab.ffmpeg import measure_alpha_spread
+
+    target = config.out_dir / "opaque.mov"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            str(config.ffmpeg),
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=red:size=160x120:rate=10:duration=1",
+            "-vf",
+            "format=yuva444p10le",
+            "-c:v",
+            "prores_ks",
+            "-profile:v",
+            "4444",
+            str(target),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+    assert measure_alpha_spread(target, config) == 0
+
+
+def test_alpha_spread_sees_a_subject_that_appears_late(config: Config) -> None:
+    """Sampling only frame one would miss a matte that starts empty."""
+    import subprocess
+
+    from media_lab.ffmpeg import measure_alpha_spread
+
+    target = config.out_dir / "late.mov"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    # Transparent for the first half, then an opaque box fades in.
+    subprocess.run(
+        [
+            str(config.ffmpeg),
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=black@0.0:size=160x120:rate=10:duration=2",
+            "-vf",
+            "format=yuva444p,fade=t=in:st=1:d=0.2:alpha=1",
+            "-c:v",
+            "prores_ks",
+            "-profile:v",
+            "4444",
+            str(target),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+    assert measure_alpha_spread(target, config) > 0

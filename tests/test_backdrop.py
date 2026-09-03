@@ -162,3 +162,50 @@ def test_rejects_a_missing_backdrop(subject: Path, config: Config, runner: KinoR
         place_on_backdrop(
             subject, config.in_dir / "absent.png", config.out_dir / "c.mp4", config, runner
         )
+
+
+def test_reports_a_subject_larger_than_the_canvas(
+    subject: Path, config: Config, runner: KinoRunner
+) -> None:
+    """PLAN.md promised a resolution report rather than a silent resize."""
+    small_backdrop = config.in_dir / "small.png"
+    _ffmpeg(
+        config,
+        [
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=navy:size=100x76:duration=1",
+            "-frames:v",
+            "1",
+            str(small_backdrop),
+        ],
+    )
+
+    result = place_on_backdrop(subject, small_backdrop, config.out_dir / "c.mp4", config, runner)
+
+    assert (result.subject_width, result.subject_height) == (200, 150)
+    assert result.subject_overflows_canvas is True
+
+
+def test_does_not_warn_when_subject_fits_the_canvas(
+    subject: Path, still_backdrop: Path, config: Config, runner: KinoRunner
+) -> None:
+    result = place_on_backdrop(subject, still_backdrop, config.out_dir / "c.mp4", config, runner)
+
+    assert result.subject_overflows_canvas is False
+    assert result.subject_aspect_differs is False
+
+
+def test_reports_a_subject_with_a_different_shape(
+    subject: Path, config: Config, runner: KinoRunner
+) -> None:
+    wide = config.in_dir / "wide.png"
+    _ffmpeg(
+        config,
+        ["-f", "lavfi", "-i", "color=c=navy:size=640x200:duration=1", "-frames:v", "1", str(wide)],
+    )
+
+    result = place_on_backdrop(subject, wide, config.out_dir / "c.mp4", config, runner)
+
+    assert result.subject_aspect_differs is True

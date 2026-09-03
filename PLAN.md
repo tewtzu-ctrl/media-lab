@@ -163,7 +163,7 @@ diferite; fundal lipsă.
 
 ---
 
-## Pas 4 — `filters`: filtre și color grading — GATA
+## Pas 4 — `filters`: filtre și color grading — GATA (fc428b2)
 
 **Depinde de:** Pas 1.
 
@@ -178,7 +178,7 @@ input fără video stream.
 
 ---
 
-## Pas 5 — `music`: muzică de fundal cu ducking — GATA
+## Pas 5 — `music`: muzică de fundal cu ducking — GATA (7ae0ca6)
 
 **Depinde de:** Pas 1.
 
@@ -193,7 +193,7 @@ muzică mai lungă (trim + fade); LUFS țintă atins.
 
 ---
 
-## Pas 6 — `short`: export vertical 9:16 + quality gate — GATA
+## Pas 6 — `short`: export vertical 9:16 + quality gate — GATA (fc428b2)
 
 **Depinde de:** Pas 1.
 
@@ -208,7 +208,7 @@ quality gate-ul (trebuie să RAPORTEZE, nu să treacă tăcut).
 
 ---
 
-## Pas 7 — `pipeline`: fluxul complet într-o comandă — GATA
+## Pas 7 — `pipeline`: fluxul complet într-o comandă — GATA (c4a6664)
 
 **Depinde de:** Pașii 2-6.
 
@@ -222,6 +222,13 @@ reluare; verificare că `in/` a rămas neatins.
 
 **Livrabil:**
 `media-lab pipeline in/clip.mp4 --bg in/bg.jpg --track in/song.mp3 -o out/`
+
+---
+
+## Stare la 2026-09-03
+
+Toți pașii 0-7 sunt implementați, testați și commiși. Ultimul commit: `dbb9a56`.
+Suita: 115/115, exit 0. ruff + mypy curate. Build: wheel și sdist se produc.
 
 ---
 
