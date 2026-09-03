@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from ..config import Config
-from ..errors import MediaLabError
+from ..errors import MediaLabError, ValidationError
 from ..kino import KinoRunner
 from ..paths import ensure_readable_source, ensure_writable_output, work_path
 from ..probe import MediaInfo, probe
@@ -66,7 +66,7 @@ def _layer_type(path: Path) -> str:
 
 def _check_range(value: float, low: float, high: float, label: str) -> float:
     if not low <= value <= high:
-        raise MediaLabError(f"{label} must be between {low} and {high}, got {value}")
+        raise ValidationError(f"{label} must be between {low} and {high}, got {value}")
     return value
 
 

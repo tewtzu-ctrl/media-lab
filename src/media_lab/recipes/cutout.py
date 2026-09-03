@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from ..config import Config
-from ..errors import MediaLabError
+from ..errors import MediaLabError, ValidationError
 from ..kino import KinoRunner
 from ..paths import ensure_readable_source, ensure_writable_output
 from ..probe import MediaInfo
@@ -44,7 +44,7 @@ class CutoutResult:
 
 def _validate_choice(value: str, allowed: tuple[str, ...], label: str) -> str:
     if value not in allowed:
-        raise MediaLabError(f"{label} must be one of {', '.join(allowed)}, got {value!r}")
+        raise ValidationError(f"{label} must be one of {', '.join(allowed)}, got {value!r}")
     return value
 
 
@@ -55,7 +55,7 @@ def _expected_suffix(source: Path) -> str:
 def _validate_output_suffix(source: Path, output: Path) -> None:
     wanted = _expected_suffix(source)
     if output.suffix.lower() != wanted:
-        raise MediaLabError(
+        raise ValidationError(
             f"cutout of {source.suffix} input must be written as {wanted}, got {output.suffix!r}"
         )
 

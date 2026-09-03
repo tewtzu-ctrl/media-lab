@@ -80,7 +80,7 @@ class KinoRunner:
             raise KinoTimeoutError(tuple(args), limit) from exc
 
         if completed.returncode != 0:
-            raise KinoError(tuple(args), completed.returncode, completed.stderr)
+            raise KinoError(tuple(args), completed.returncode, completed.stderr, completed.stdout)
         return KinoResult(
             args=tuple(args),
             stdout=completed.stdout,
