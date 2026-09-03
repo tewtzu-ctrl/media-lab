@@ -20,9 +20,11 @@ fost făcut și **toate constatările au fost reparate** în aceeași sesiune.
 
 ## De la ultima închidere
 
-A fost creat skill-ul global `verify-render` (vezi „Unelte" mai jos) și
-`HANDOFF.md` a fost actualizat să-l indice. Nimic altceva nu s-a schimbat în
-cod. Suita: 144 teste, exit 0, 92% coverage.
+A fost creat skill-ul global `verify-render` (vezi „Unelte" mai jos), trimis la
+review, și **reparat**: reviewerul a găsit 2 probleme critice și 4 majore, toate
+reproduse și confirmate de mine, toate reparate și retestate în aceeași sesiune.
+Nimic din codul `media-lab` nu s-a schimbat. Suita: 144 teste, exit 0, 92%
+coverage. `work/` a fost golit (426 MB); `in/` și `out/` sunt intacte.
 
 ## Următorul pas exact
 
@@ -47,9 +49,17 @@ Nimic tehnic. Două lucruri așteaptă o decizie de-a ta:
 
 ## Din review — probleme rămase nereparate
 
-**Niciuna.** Toate cele 12 constatări ale agentului de review și cele 6 ale mele
-au fost reparate în această sesiune, la cererea ta explicită. Două puncte unde
-am decis altfel decât agentul, cu motivul:
+**Niciuna.** Două runde de review, ambele complet rezolvate:
+
+- Runda 1, pe `media-lab`: 12 constatări ale agentului + 6 ale mele, toate reparate.
+- Runda 2, pe scriptul skill-ului `verify-render`: 2 critice (traceback necapturat
+  la binar neexecutabil; injecție în filtergraph prin `--frame-over`, cu citire
+  arbitrară de fișiere locale prin `movie=`) și 4 majore (cadru fantomă raportat
+  ca `ok`, `--check-matte` mințind pe fișiere fără alpha, cover art tratat ca
+  video, prag de octeți nedocumentat). Toate reproduse, reparate și retestate.
+  `bandit` pe script și pe `src/`: doar B404/B603, informaționale.
+
+Din runda 1, două puncte unde am decis altfel decât agentul, cu motivul:
 
 - `filters.py` (314 linii) — agentul nu a semnalat, eu da. La recitire, 314 e în
   intervalul normal din `coding-style.md` (200-400). Nu am mai spart fișierul;
