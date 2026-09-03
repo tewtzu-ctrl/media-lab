@@ -123,3 +123,64 @@ def test_media_info_aspect_ratio_guards_zero_height(sample_video: Path, config: 
 
     info = replace(probe(sample_video, config), height=0)
     assert info.aspect_ratio == 0.0
+
+
+def test_probe_detects_alpha_signalled_by_container_tag(config: Config, tmp_path: Path) -> None:
+    """VP9-in-WebM keeps alpha in BlockAdditional; pix_fmt still reads yuv420p."""
+    import subprocess
+
+    source = config.in_dir / "alpha-source.mov"
+    webm = config.out_dir / "alpha.webm"
+    webm.parent.mkdir(parents=True, exist_ok=True)
+    ffmpeg = str(config.ffmpeg)
+    subprocess.run(
+        [
+            ffmpeg,
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=160x120:rate=10:duration=1",
+            "-vf",
+            "format=yuva420p",
+            "-c:v",
+            "qtrle",
+            str(source),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        [
+            ffmpeg,
+            "-y",
+            "-loglevel",
+            "error",
+            "-i",
+            str(source),
+            "-c:v",
+            "libvpx-vp9",
+            "-pix_fmt",
+            "yuva420p",
+            str(webm),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+    info = probe(webm, config)
+    assert info.pixel_format == "yuv420p"
+    assert info.has_alpha is True
+
+
+def test_alpha_mode_tag_matching_is_case_insensitive() -> None:
+    """ffmpeg writes alpha_mode, kinocut's output carries ALPHA_MODE."""
+    from media_lab.probe import _has_alpha_mode_tag
+
+    assert _has_alpha_mode_tag({"ALPHA_MODE": "1"}) is True
+    assert _has_alpha_mode_tag({"alpha_mode": "1"}) is True
+    assert _has_alpha_mode_tag({"alpha_mode": "0"}) is False
+    assert _has_alpha_mode_tag({"ENCODER": "x"}) is False
+    assert _has_alpha_mode_tag(None) is False

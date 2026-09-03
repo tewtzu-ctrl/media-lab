@@ -13,6 +13,9 @@ from .errors import ProbeError
 
 PROBE_TIMEOUT_S = 60
 ALPHA_PIXEL_FORMAT_MARKERS = ("yuva", "rgba", "bgra", "argb", "abgr", "ya8", "ya16", "pal8")
+# VP9-in-WebM stores alpha in BlockAdditional, so the pixel format still reads
+# yuv420p. The container signals it with this stream tag instead.
+ALPHA_MODE_TAG = "ALPHA_MODE"
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +65,14 @@ def _parse_duration(payload: dict[str, Any], video: dict[str, Any] | None) -> fl
     return 0.0
 
 
+def _has_alpha_mode_tag(tags: Any) -> bool:
+    """Matroska writers disagree on the case of this tag, so match case-insensitively."""
+    if not isinstance(tags, dict):
+        return False
+    wanted = ALPHA_MODE_TAG.casefold()
+    return any(str(key).casefold() == wanted and str(value) == "1" for key, value in tags.items())
+
+
 def probe(path: Path | str, config: Config) -> MediaInfo:
     """Run ffprobe and return a typed summary. Raises ProbeError on failure."""
     target = Path(path)
@@ -94,6 +105,8 @@ def probe(path: Path | str, config: Config) -> MediaInfo:
     video = next((s for s in streams if s.get("codec_type") == "video"), None)
     audio = next((s for s in streams if s.get("codec_type") == "audio"), None)
     pixel_format = str(video.get("pix_fmt", "")) if video else ""
+    tags = video.get("tags", {}) if video else {}
+    tagged_alpha = _has_alpha_mode_tag(tags)
 
     return MediaInfo(
         path=target,
@@ -104,5 +117,7 @@ def probe(path: Path | str, config: Config) -> MediaInfo:
         pixel_format=pixel_format,
         has_video=video is not None,
         has_audio=audio is not None,
-        has_alpha=any(marker in pixel_format for marker in ALPHA_PIXEL_FORMAT_MARKERS),
+        has_alpha=(
+            any(marker in pixel_format for marker in ALPHA_PIXEL_FORMAT_MARKERS) or tagged_alpha
+        ),
     )
