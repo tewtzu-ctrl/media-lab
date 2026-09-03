@@ -6,6 +6,7 @@ Nothing overwrites an existing file unless the caller says so explicitly.
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from .config import Config
@@ -74,3 +75,33 @@ def work_directory(config: Config, name: str) -> Path:
     target = config.work_dir / name
     target.mkdir(parents=True, exist_ok=True)
     return target
+
+
+def _size_on_disk(path: Path) -> int:
+    if path.is_file() or path.is_symlink():
+        return path.stat().st_size
+    return sum(_size_on_disk(child) for child in path.iterdir())
+
+
+def clear_work_directory(config: Config, *, dry_run: bool = False) -> tuple[tuple[Path, ...], int]:
+    """Remove everything under work/, the pipeline's intermediate scratch space.
+
+    Only config.work_dir is ever touched - never in/ or out/. With dry_run,
+    nothing is deleted; the same report is returned so a caller can preview
+    what would be removed. Returns the top-level entries that were (or would
+    be) removed, and their combined size in bytes.
+    """
+    if not config.work_dir.is_dir():
+        return (), 0
+
+    entries = tuple(sorted(config.work_dir.iterdir()))
+    total_bytes = sum(_size_on_disk(entry) for entry in entries)
+
+    if not dry_run:
+        for entry in entries:
+            if entry.is_dir() and not entry.is_symlink():
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
+
+    return entries, total_bytes

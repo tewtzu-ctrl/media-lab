@@ -12,27 +12,28 @@ probed and checked against what was asked for.
 
 ## What it does
 
-| Command | What it does |
-|---|---|
-| `media-lab doctor` | Report the resolved environment and run kinocut's own checks |
-| `media-lab cutout` | Cut a person out of a still or video, keeping alpha |
-| `media-lab backdrop` | Composite a cutout onto a new image or video backdrop |
-| `media-lab filter` | Apply one of ten named looks, or chain two |
-| `media-lab music` | Mix a music bed under the voice with sidechain ducking |
-| `media-lab short` | Reframe to 9:16 (or another ratio), export, quality-gate, thumbnail |
-| `media-lab pipeline` | Run the whole edit in one pass |
+| Command              | What it does                                                        |
+| -------------------- | ------------------------------------------------------------------- |
+| `media-lab doctor`   | Report the resolved environment and run kinocut's own checks        |
+| `media-lab cutout`   | Cut a person out of a still or video, keeping alpha                 |
+| `media-lab backdrop` | Composite a cutout onto a new image or video backdrop               |
+| `media-lab filter`   | Apply one of ten named looks, or chain two                          |
+| `media-lab music`    | Mix a music bed under the voice with sidechain ducking              |
+| `media-lab short`    | Reframe to 9:16 (or another ratio), export, quality-gate, thumbnail |
+| `media-lab pipeline` | Run the whole edit in one pass                                      |
+| `media-lab clean`    | Empty `work/` (add `--dry-run` to preview first)                    |
 
 Available looks: `warm`, `cool`, `vintage`, `cinematic`, `noir`, `vignette`,
 `glow`, `grain`, `vibrant`, `punchy`.
 
 ## Requirements
 
-| Component | Version | Notes |
-|---|---|---|
-| macOS | arm64 (Apple Silicon) | the bundled ffmpeg binaries are arm64 only |
-| Python | 3.12 | installed automatically by `uv` |
-| Node.js | 22+ | needed by the Hyperframes CLI |
-| uv | any recent | https://docs.astral.sh/uv/ |
+| Component | Version               | Notes                                      |
+| --------- | --------------------- | ------------------------------------------ |
+| macOS     | arm64 (Apple Silicon) | the bundled ffmpeg binaries are arm64 only |
+| Python    | 3.12                  | installed automatically by `uv`            |
+| Node.js   | 22+                   | needed by the Hyperframes CLI              |
+| uv        | any recent            | https://docs.astral.sh/uv/                 |
 
 Pinned: `kinocut==1.15.1`, `hyperframes@0.8.27`, static `ffmpeg`/`ffprobe` 9.0
 (checksums pinned in `scripts/fetch-ffmpeg.sh`).

@@ -213,3 +213,57 @@ def test_handler_refuses_to_write_outside_the_project(
 def test_pipeline_accepts_the_quality_gate_flag() -> None:
     args = cli.build_parser().parse_args(["pipeline", "c.mp4", "-o", "o.mp4", "--fail-on-warning"])
     assert args.fail_on_warning is True
+
+
+def test_clean_reports_an_already_empty_directory(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.main(["clean"]) == 0
+    assert "already empty" in capsys.readouterr().out
+
+
+def test_clean_removes_work_directory_contents(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    work = cli_project / "work"
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "leftover.mp4").write_bytes(b"scratch data")
+
+    exit_code = cli.main(["clean"])
+
+    printed = capsys.readouterr().out
+    assert exit_code == 0
+    assert "removed 1 item(s)" in printed
+    assert "leftover.mp4" in printed
+    assert list(work.iterdir()) == []
+
+
+def test_clean_dry_run_lists_without_deleting(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    work = cli_project / "work"
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "leftover.mp4").write_bytes(b"scratch data")
+
+    exit_code = cli.main(["clean", "--dry-run"])
+
+    printed = capsys.readouterr().out
+    assert exit_code == 0
+    assert "would remove 1 item(s)" in printed
+    assert (work / "leftover.mp4").is_file()
+
+
+def test_clean_never_touches_in_or_out(
+    cli_project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    out = cli_project / "out"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "final.mp4").write_bytes(b"keep me")
+    work = cli_project / "work"
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "scratch.tmp").write_bytes(b"delete me")
+
+    cli.main(["clean"])
+
+    assert (out / "final.mp4").read_bytes() == b"keep me"
+    assert (cli_project / "in" / "clip.mp4").is_file()
