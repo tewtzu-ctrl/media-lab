@@ -104,13 +104,17 @@ Din runda 1, două puncte unde am decis altfel decât agentul, cu motivul:
   Pentru cutout-uri: `--expect-alpha --check-matte --frame-over magenta`.
   Încapsulează cele trei capcane de mai sus, deci nu le mai redescoperim.
 
-## Întrebări pentru tine
+## Întrebări pentru mine
+
+Rezolvate în sesiunea de închidere: repo-ul e urcat public, `work/` a fost golit,
+iar toate constatările din review au fost reparate. Rămân deschise:
 
 1. Intră E1-E4 în scop? (subtitrări Whisper, separare voce/muzică, upscale,
-   loturi de imagini)
-2. Ștergem `out/` și `work/` (462 MB de randări de test)?
-3. Vrei o comandă `media-lab clean`?
-4. Urcăm repo-ul pe GitHub? Până acum am lucrat doar local, cum ai cerut.
-5. Pentru clipuri unde persoana ține o placă sau un produs: modelul actual taie
-   obiectul. Vrei să investighez o soluție (extra `object-matte` de pe dev tip,
-   sau alt model)?
+   loturi de imagini). Modulele sunt instalate, comenzile nu există.
+2. Vrei o comandă `media-lab clean` care să golească `work/` singură? Am făcut-o
+   manual de data asta.
+3. Pentru clipuri unde persoana ține o placă sau un produs: modelul actual taie
+   obiectul. Investighez o soluție (extra `object-matte` de pe dev tip, sau alt
+   model)?
+4. `out/` are 232 MB de randări de test. Le păstrăm sau le ștergem la
+   următoarea închidere?
