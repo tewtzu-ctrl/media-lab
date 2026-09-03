@@ -1,0 +1,8 @@
+{
+  "name": "media-lab-tools",
+  "private": true,
+  "description": "Hyperframes CLI pinned locally for media-lab",
+  "dependencies": {
+    "hyperframes": "0.8.27"
+  }
+}

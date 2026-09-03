@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+
+# Local binaries (downloaded per machine, see README)
+bin/
+
+# Secrets and local config
+.env
+
+# Media: sources and renders never go into git
+in/
+out/
+work/
