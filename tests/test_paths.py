@@ -8,7 +8,12 @@ import pytest
 
 from media_lab.config import Config
 from media_lab.errors import PathSafetyError
-from media_lab.paths import ensure_readable_source, ensure_writable_output, work_path
+from media_lab.paths import (
+    clear_work_directory,
+    ensure_readable_source,
+    ensure_writable_output,
+    work_path,
+)
 
 
 def test_accepts_an_existing_file(sample_video: Path) -> None:
@@ -107,3 +112,56 @@ def test_work_directory_rejects_an_empty_name(config: Config) -> None:
 
     with pytest.raises(PathSafetyError, match="must not be empty"):
         work_directory(config, "")
+
+
+def test_clear_work_directory_removes_files_and_subdirectories(config: Config) -> None:
+    (config.work_dir / "sub").mkdir(parents=True, exist_ok=True)
+    (config.work_dir / "a.txt").write_bytes(b"hello")
+    (config.work_dir / "sub" / "b.txt").write_bytes(b"world!")
+
+    entries, total_bytes = clear_work_directory(config)
+
+    assert {e.name for e in entries} == {"a.txt", "sub"}
+    assert total_bytes == len(b"hello") + len(b"world!")
+    assert list(config.work_dir.iterdir()) == []
+
+
+def test_clear_work_directory_dry_run_removes_nothing(config: Config) -> None:
+    config.work_dir.mkdir(parents=True, exist_ok=True)
+    (config.work_dir / "a.txt").write_bytes(b"hello")
+
+    entries, total_bytes = clear_work_directory(config, dry_run=True)
+
+    assert [e.name for e in entries] == ["a.txt"]
+    assert total_bytes == 5
+    assert (config.work_dir / "a.txt").is_file()
+
+
+def test_clear_work_directory_on_an_absent_directory_is_a_noop(config: Config) -> None:
+    assert not config.work_dir.exists()
+
+    entries, total_bytes = clear_work_directory(config)
+
+    assert entries == ()
+    assert total_bytes == 0
+
+
+def test_clear_work_directory_on_an_already_empty_directory(config: Config) -> None:
+    config.work_dir.mkdir(parents=True, exist_ok=True)
+
+    entries, total_bytes = clear_work_directory(config)
+
+    assert entries == ()
+    assert total_bytes == 0
+
+
+def test_clear_work_directory_never_touches_in_or_out(config: Config) -> None:
+    (config.in_dir / "source.mp4").write_bytes(b"do not touch")
+    config.out_dir.mkdir(parents=True, exist_ok=True)
+    (config.out_dir / "final.mp4").write_bytes(b"do not touch either")
+    (config.work_dir / "scratch.tmp").mkdir(parents=True, exist_ok=True)
+
+    clear_work_directory(config)
+
+    assert (config.in_dir / "source.mp4").read_bytes() == b"do not touch"
+    assert (config.out_dir / "final.mp4").read_bytes() == b"do not touch either"

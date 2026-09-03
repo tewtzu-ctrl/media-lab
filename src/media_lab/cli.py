@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from .config import Config, load_config
 from .errors import MediaLabError
 from .kino import KinoRunner
+from .paths import clear_work_directory
 from .pipeline import run_pipeline
 from .recipes.audio_bed import add_music_bed
 from .recipes.backdrop import place_on_backdrop
@@ -34,6 +35,11 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     subcommands.add_parser("doctor", help="Report the state of the local environment")
+
+    clean = subcommands.add_parser("clean", help="Empty work/, the pipeline scratch space")
+    clean.add_argument(
+        "--dry-run", action="store_true", help="List what would be removed, without removing it"
+    )
 
     cutout = subcommands.add_parser("cutout", help="Cut a person out of a still or video")
     _add_io_arguments(cutout)
@@ -189,6 +195,28 @@ def _run_filter(args: argparse.Namespace, config: Config, runner: KinoRunner) ->
     return 0
 
 
+def _format_bytes(count: int) -> str:
+    size = float(count)
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024 or unit == "GB":
+            return f"{size:.0f}{unit}" if unit == "B" else f"{size:.1f}{unit}"
+        size /= 1024
+    return f"{size:.1f}GB"
+
+
+def _run_clean(args: argparse.Namespace, config: Config, _runner: KinoRunner) -> int:
+    entries, total_bytes = clear_work_directory(config, dry_run=args.dry_run)
+    if not entries:
+        print(f"{config.work_dir} is already empty")
+        return 0
+
+    verb = "would remove" if args.dry_run else "removed"
+    print(f"{verb} {len(entries)} item(s) from {config.work_dir} ({_format_bytes(total_bytes)})")
+    for entry in entries:
+        print(f"  {entry.name}")
+    return 0
+
+
 def _run_music(args: argparse.Namespace, config: Config, _runner: KinoRunner) -> int:
     result = add_music_bed(
         args.input,
@@ -229,6 +257,7 @@ def _run_short(args: argparse.Namespace, config: Config, runner: KinoRunner) -> 
 
 
 HANDLERS = {
+    "clean": _run_clean,
     "cutout": _run_cutout,
     "backdrop": _run_backdrop,
     "filter": _run_filter,
