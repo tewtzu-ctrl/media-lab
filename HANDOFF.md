@@ -71,8 +71,13 @@ am decis altfel decât agentul, cu motivul:
   meu manual nu le prinsese. Merită rulat la fiecare sesiune de review.
 - Agentul `python-pro` — bun pentru rețete independente scrise în paralel, cu
   condiția să primească flagurile CLI verificate în brief.
-- `ffprobe -show_streams` cu `alphaextract,signalstats` — singurul mod onest de
-  a verifica dacă un matte chiar există.
+- **Skill-ul `verify-render`** (`~/.claude/skills/verify-render/`) — creat în
+  această sesiune, tocmai fiindcă scrisesem verificarea manual de vreo șase ori.
+  Rulează oriunde, fără instalare, iese cu 0/1 ca să poată bloca un pipeline:
+  `python3 ~/.claude/skills/verify-render/scripts/verify_render.py out/final.mp4 \
+  --ffmpeg-dir ./bin --duration 6.43 --aspect 9:16 --expect-audio`
+  Pentru cutout-uri: `--expect-alpha --check-matte --frame-over magenta`.
+  Încapsulează cele trei capcane de mai sus, deci nu le mai redescoperim.
 
 ## Întrebări pentru tine
 
