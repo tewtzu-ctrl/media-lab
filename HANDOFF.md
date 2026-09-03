@@ -2,12 +2,27 @@
 
 **Sesiune:** 2026-09-03 (prima sesiune a proiectului — repo creat de la zero)
 
+**Repo:** https://github.com/tewtzu-ctrl/media-lab (public)
+
+## Ramuri
+
+`main`, `dev` și `feat/local-media-pipeline` — toate la același commit, fiindcă
+aceasta e prima sesiune și nu există istoric anterior care să le diferențieze.
+Fluxul de acum înainte: lucrezi pe o ramură `feat/*`, o îmbini în `dev`, iar
+`dev` ajunge în `main` doar când suita e verde.
+
 ## Unde am rămas
 
 `media-lab` e complet și funcțional: 8 comenzi, pipeline cap-coadă, validat pe
 material real (clipul `punto.mp4`), nu doar sintetic. Toți pașii 0-7 din
 `PLAN.md` sunt implementați, testați și commiși. Code review-ul de sesiune a
 fost făcut și **toate constatările au fost reparate** în aceeași sesiune.
+
+## De la ultima închidere
+
+A fost creat skill-ul global `verify-render` (vezi „Unelte" mai jos) și
+`HANDOFF.md` a fost actualizat să-l indice. Nimic altceva nu s-a schimbat în
+cod. Suita: 144 teste, exit 0, 92% coverage.
 
 ## Următorul pas exact
 
