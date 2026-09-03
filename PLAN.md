@@ -72,7 +72,7 @@ Pasul 7 depinde de 2-6.
 
 ---
 
-## Pas 0 — Setup mediu (FAZA 3)
+## Pas 0 — Setup mediu (FAZA 3) — GATA (41bdcf9)
 
 **Depinde de:** nimic.
 
@@ -103,7 +103,7 @@ API. `.env` va conține doar căi și praguri (`MEDIA_LAB_FFMPEG_DIR`,
 
 ---
 
-## Pas 1 — Schelet: config, runner kino, verificare
+## Pas 1 — Schelet: config, runner kino, verificare — GATA (f23efa4)
 
 **Depinde de:** Pas 0.
 
@@ -131,7 +131,7 @@ corupt; refuz de suprascriere; refuz de scriere în `in/`.
 
 ---
 
-## Pas 2 — `cutout`: decupat persoana de pe fundal
+## Pas 2 — `cutout`: decupat persoana de pe fundal — GATA (c233d93)
 
 **Depinde de:** Pas 1.
 
@@ -147,7 +147,7 @@ nu ascuns); format neacceptat.
 
 ---
 
-## Pas 3 — `backdrop`: fundal nou + compositing
+## Pas 3 — `backdrop`: fundal nou + compositing — GATA (32a4baf)
 
 **Depinde de:** Pas 2.
 
@@ -163,7 +163,7 @@ diferite; fundal lipsă.
 
 ---
 
-## Pas 4 — `filters`: filtre și color grading
+## Pas 4 — `filters`: filtre și color grading — GATA
 
 **Depinde de:** Pas 1.
 
@@ -178,7 +178,7 @@ input fără video stream.
 
 ---
 
-## Pas 5 — `music`: muzică de fundal cu ducking
+## Pas 5 — `music`: muzică de fundal cu ducking — GATA
 
 **Depinde de:** Pas 1.
 
@@ -193,7 +193,7 @@ muzică mai lungă (trim + fade); LUFS țintă atins.
 
 ---
 
-## Pas 6 — `short`: export vertical 9:16 + quality gate
+## Pas 6 — `short`: export vertical 9:16 + quality gate — GATA
 
 **Depinde de:** Pas 1.
 
@@ -208,7 +208,7 @@ quality gate-ul (trebuie să RAPORTEZE, nu să treacă tăcut).
 
 ---
 
-## Pas 7 — `pipeline`: fluxul complet într-o comandă
+## Pas 7 — `pipeline`: fluxul complet într-o comandă — GATA
 
 **Depinde de:** Pașii 2-6.
 
@@ -245,3 +245,45 @@ planului până zici tu:
 4. Rezultatul real al rulării, lipit în raport
 5. Commit atomic `feat:` / `fix:` / `chore:`
 6. Raport: ce am făcut / ce am rulat / rezultatul real / ce urmează
+
+
+---
+
+## Devieri față de planul inițial (FAZA 2.4)
+
+1. **Detecția alpha era greșită** (Pas 2). VP9-in-WebM ține alpha în
+   BlockAdditional, deci `pix_fmt` rămâne `yuv420p`. Verificarea din Pasul 1
+   dădea fals negativ pe fiecare cutout. Corectat: se citește și tagul
+   `alpha_mode` din container, insensibil la majuscule (ffmpeg îl scrie cu
+   litere mici, kinocut cu majuscule).
+
+2. **`composite-layers` confină sursele** (Pas 3). Orice `src` trebuie să
+   fie sub directorul spec-ului — guardrail de securitate deliberat. Sursele
+   se stagează prin hardlink lângă spec, în `work/`, nu se referențiază din
+   `in/`.
+
+3. **Compositing-ul produce video fără audio** (Pas 3). Vocea originală
+   trebuie reatașată. Pasul 7 va folosi `kino extract-audio` pe sursă,
+   `audio-bed` pentru mixul voce+muzică, apoi `kino add-audio` peste
+   compozit. Nu era prevăzut în planul inițial.
+
+4. **`kino audio-bed` nu funcționează pe macOS** (Pas 5). kinocut 1.15.1 îl
+   blochează în spatele unor „immutable source snapshots" construite pe
+   `os.memfd_create` — API exclusiv Linux. Eșuează cu `source_identity_changed`
+   înainte să atingă vreun fișier. Verificat direct: `hasattr(os,'memfd_create')`
+   e `False` pe Darwin. Afectate sunt doar `audio-bed` și `body-swap`; restul
+   comenzilor merg. Ducking-ul e implementat în schimb direct în ffmpeg
+   (`sidechaincompress` + `loudnorm`), în `recipes/audio_bed.py`, cu un modul
+   nou `ffmpeg.py` ca singur punct de apel către ffmpeg.
+
+5. **Clasă de eroare nouă: `ValidationError`** (integrare). Rețetele foloseau
+   inconsecvent `ConfigError` și `MediaLabError` pentru validarea argumentelor.
+   Unificat.
+
+6. **`KinoError` păstra doar stderr** (integrare). `video-quality-check
+   --fail-on-warning` iese cu cod 1, stderr gol, dar scrie raportul JSON pe
+   stdout — care se pierdea. `KinoError` păstrează acum și stdout.
+
+7. **Pas nou, neprevăzut: `recipes/audio_attach.py`** (Pas 7). Compositing-ul
+   scoate audio, deci vocea originală trebuie reatașată înainte de mixul cu
+   muzică. Nu era în planul inițial.

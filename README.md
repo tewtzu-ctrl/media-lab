@@ -1,37 +1,81 @@
 # media-lab
 
-Local video and photo editing pipeline for short social clips, built as a typed
-wrapper over [Kinocut](https://github.com/KyaniteLabs/kinocut).
+Local video and photo editing for short social clips, built as a typed wrapper
+over [Kinocut](https://github.com/KyaniteLabs/kinocut).
 
 Everything runs on this machine. No cloud services, no API keys, no uploads.
+Sources are never modified and no render is reported as done until it has been
+probed and checked against what was asked for.
 
 - Working contract: [REGULI.md](./REGULI.md)
-- Implementation plan: [PLAN.md](./PLAN.md)
+- Implementation plan and deviations: [PLAN.md](./PLAN.md)
+
+## What it does
+
+| Command | What it does |
+|---|---|
+| `media-lab doctor` | Report the resolved environment and run kinocut's own checks |
+| `media-lab cutout` | Cut a person out of a still or video, keeping alpha |
+| `media-lab backdrop` | Composite a cutout onto a new image or video backdrop |
+| `media-lab filter` | Apply one of ten named looks, or chain two |
+| `media-lab music` | Mix a music bed under the voice with sidechain ducking |
+| `media-lab short` | Reframe to 9:16 (or another ratio), export, quality-gate, thumbnail |
+| `media-lab pipeline` | Run the whole edit in one pass |
+
+Available looks: `warm`, `cool`, `vintage`, `cinematic`, `noir`, `vignette`,
+`glow`, `grain`, `vibrant`, `punchy`.
 
 ## Requirements
 
 | Component | Version | Notes |
 |---|---|---|
-| macOS | arm64 (Apple Silicon) | ffmpeg binaries are arm64 only |
+| macOS | arm64 (Apple Silicon) | the bundled ffmpeg binaries are arm64 only |
 | Python | 3.12 | installed automatically by `uv` |
 | Node.js | 22+ | needed by the Hyperframes CLI |
 | uv | any recent | https://docs.astral.sh/uv/ |
 
-Pinned dependencies: `kinocut==1.15.1`, `hyperframes@0.8.27`,
-static `ffmpeg`/`ffprobe` 9.0 (checksums pinned in `scripts/fetch-ffmpeg.sh`).
+Pinned: `kinocut==1.15.1`, `hyperframes@0.8.27`, static `ffmpeg`/`ffprobe` 9.0
+(checksums pinned in `scripts/fetch-ffmpeg.sh`).
 
 ## Install
 
 ```sh
-git clone <this repo> && cd media-lab
+cd media-lab
 ./scripts/fetch-ffmpeg.sh   # static ffmpeg + ffprobe into ./bin
 make setup                  # uv sync + npm install
 cp .env.example .env
 make doctor                 # verify the environment
 ```
 
-`bin/`, `.venv/` and `node_modules/` are gitignored; the three commands above
+`bin/`, `.venv/` and `node_modules/` are gitignored; those three commands
 recreate them from pinned versions.
+
+## Use it
+
+Put your footage in `in/`. Renders land in `out/`, intermediates in `work/`.
+
+```sh
+# the whole edit in one pass
+uv run media-lab pipeline in/clip.mp4 \
+    --bg in/backdrop.png \
+    --look cinematic \
+    --track in/song.mp3 \
+    -o out/final.mp4
+
+# or one stage at a time
+uv run media-lab cutout   in/clip.mp4 -o out/cutout.webm
+uv run media-lab backdrop out/cutout.webm --bg in/bg.png -o out/composed.mp4
+uv run media-lab filter   out/composed.mp4 --look warm --then grain -o out/graded.mp4
+uv run media-lab music    out/graded.mp4 --track in/song.mp3 -o out/mixed.mp4
+uv run media-lab short    out/mixed.mp4 -o out/final.mp4
+```
+
+The pipeline runs: cutout, backdrop, look, restore the voice the compositor
+drops, music bed, vertical export. Stages you do not ask for are skipped —
+without `--bg` there is no cutout, and a clip that only needs reframing keeps
+its original audio untouched.
+
+Nothing overwrites an existing file unless you pass `--force`.
 
 ## Layout
 
@@ -45,6 +89,12 @@ src/       package source
 tests/     test suite
 ```
 
+Inside `src/media_lab/`: `config.py` validates the environment at startup,
+`kino.py` is the only module that shells out to kinocut, `ffmpeg.py` the only
+one that shells out to ffmpeg, `probe.py` reads facts with ffprobe,
+`verify.py` asserts a render matches expectations, `paths.py` enforces the
+non-destructive contract, and `recipes/` holds one module per editing step.
+
 ## Development
 
 ```sh
@@ -54,8 +104,25 @@ make typecheck   # mypy strict
 make check       # all of the above
 ```
 
+Test media is synthesised with ffmpeg at run time; no fixtures are committed.
+The suite performs real renders, so it takes a few minutes.
+
+## Known limitations
+
+- **`kino audio-bed` does not work on macOS.** kinocut 1.15.1 gates it behind
+  immutable source snapshots built on `os.memfd_create`, a Linux-only API, so
+  it fails with `source_identity_changed` before touching any media. The music
+  bed is therefore built with ffmpeg's own `sidechaincompress` + `loudnorm`
+  instead, in `recipes/audio_bed.py`. Same result, different engine.
+- **Object and product cutouts are not available.** They need the
+  `kinocut[object-matte]` extra, which is not in the published 1.15.0 wheel.
+  Person cutouts (`u2net_human_seg`) work and are hardware-accelerated
+  through CoreML.
+- **Cutout speed** is roughly 125 ms per frame on an M2, so a 30-second clip
+  at 30 fps takes about two minutes.
+- `video-body-swap` exists in kinocut but is deliberately not exposed here.
+
 ## Environment variables
 
-All configuration lives in `.env`. See [.env.example](./.env.example) for the
-full documented list. This project holds no secrets: the variables are
-directory paths and timeouts only.
+All configuration lives in `.env`; see [.env.example](./.env.example). This
+project holds no secrets — the variables are directory paths and timeouts.

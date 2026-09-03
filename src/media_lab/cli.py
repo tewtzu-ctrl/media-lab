@@ -9,10 +9,106 @@ from collections.abc import Sequence
 from .config import Config, load_config
 from .errors import MediaLabError
 from .kino import KinoRunner
+from .pipeline import run_pipeline
+from .recipes.audio_bed import add_music_bed
+from .recipes.backdrop import place_on_backdrop
+from .recipes.cutout import DEVICE_CHOICES, QUALITY_CHOICES, cut_out_person
+from .recipes.filters import LOOKS, apply_look, apply_look_chain
+from .recipes.to_short import to_short
+from .verify import ASPECT_RATIOS
+
+RESIZE_QUALITY_CHOICES = ("low", "medium", "high", "ultra")
 
 
-def _report_doctor(config: Config) -> int:
-    runner = KinoRunner.from_config(config)
+def _add_io_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("input", help="Input media file")
+    parser.add_argument("-o", "--output", required=True, help="Output path")
+    parser.add_argument("--force", action="store_true", help="Overwrite an existing output")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="media-lab",
+        description="Local video and photo editing pipeline built on Kinocut.",
+    )
+    subcommands = parser.add_subparsers(dest="command", required=True)
+
+    subcommands.add_parser("doctor", help="Report the state of the local environment")
+
+    cutout = subcommands.add_parser("cutout", help="Cut a person out of a still or video")
+    _add_io_arguments(cutout)
+    cutout.add_argument("--quality", choices=QUALITY_CHOICES, default="balanced")
+    cutout.add_argument("--device", choices=DEVICE_CHOICES, default="auto")
+
+    backdrop = subcommands.add_parser("backdrop", help="Composite a cutout onto a backdrop")
+    _add_io_arguments(backdrop)
+    backdrop.add_argument("--bg", required=True, help="Backdrop image or video")
+    backdrop.add_argument("--width", type=int, help="Canvas width (defaults to the backdrop)")
+    backdrop.add_argument("--height", type=int, help="Canvas height (defaults to the backdrop)")
+    backdrop.add_argument("--scale", type=float, default=1.0, help="Subject scale")
+    backdrop.add_argument("--opacity", type=float, default=1.0, help="Subject opacity")
+
+    look = subcommands.add_parser("filter", help="Apply a named look")
+    _add_io_arguments(look)
+    look.add_argument("--look", required=True, choices=sorted(LOOKS), help="Look to apply")
+    look.add_argument("--then", dest="second_look", choices=sorted(LOOKS), help="A second look")
+
+    music = subcommands.add_parser("music", help="Mix a music bed under the voice")
+    _add_io_arguments(music)
+    music.add_argument("--track", required=True, help="Music file")
+    music.add_argument("--target-lufs", type=float, default=-16.0)
+    music.add_argument("--music-volume", type=float, default=1.0)
+    music.add_argument("--no-loop", dest="loop", action="store_false", help="Do not loop the bed")
+
+    short = subcommands.add_parser("short", help="Export a vertical social clip")
+    _add_io_arguments(short)
+    short.add_argument("--aspect", choices=sorted(ASPECT_RATIOS), default="9:16")
+    short.add_argument("--quality", choices=RESIZE_QUALITY_CHOICES, default="high")
+    short.add_argument("--no-thumbnail", dest="thumbnail", action="store_false")
+    short.add_argument("--fail-on-warning", action="store_true")
+
+    pipeline = subcommands.add_parser(
+        "pipeline", help="Run the whole edit: cutout, backdrop, look, music, vertical export"
+    )
+    _add_io_arguments(pipeline)
+    pipeline.add_argument("--bg", help="Backdrop image or video (enables the cutout stage)")
+    pipeline.add_argument("--look", choices=sorted(LOOKS), help="Look to grade with")
+    pipeline.add_argument("--track", help="Music bed")
+    pipeline.add_argument("--aspect", choices=sorted(ASPECT_RATIOS), default="9:16")
+    pipeline.add_argument("--cutout-quality", choices=QUALITY_CHOICES, default="balanced")
+    pipeline.add_argument("--target-lufs", type=float, default=-16.0)
+
+    return parser
+
+
+def _run_pipeline(args: argparse.Namespace, config: Config, runner: KinoRunner) -> int:
+    result = run_pipeline(
+        args.input,
+        args.output,
+        config,
+        runner,
+        backdrop=args.bg,
+        look=args.look,
+        music=args.track,
+        aspect_ratio=args.aspect,
+        cutout_quality=args.cutout_quality,
+        target_lufs=args.target_lufs,
+        force=args.force,
+    )
+    print("pipeline complete")
+    for stage in result.stages:
+        print(f"  {stage.name:<10} {stage.output}")
+    print(f"final {result.final} ({result.media.width}x{result.media.height})")
+    if result.thumbnail_path is not None:
+        print(f"  thumbnail {result.thumbnail_path}")
+    print(f"  quality score {result.quality_report.overall_score:.0f}")
+    for check in result.quality_report.checks:
+        if not check.passed:
+            print(f"  warning: {check.name}: {check.message}")
+    return 0
+
+
+def _report_doctor(config: Config, runner: KinoRunner) -> int:
     print("media-lab environment")
     print(f"  root            {config.root}")
     print(f"  ffmpeg          {config.ffmpeg}")
@@ -25,19 +121,106 @@ def _report_doctor(config: Config) -> int:
     print(f"  hyperframes     {config.hyperframes_command or '(not configured)'}")
     print()
     print("kino doctor")
-    result = runner.run(["doctor"])
-    print(result.stdout.rstrip())
+    print(runner.run(["doctor"]).stdout.rstrip())
     return 0
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="media-lab",
-        description="Local video and photo editing pipeline built on Kinocut.",
+def _run_cutout(args: argparse.Namespace, config: Config, runner: KinoRunner) -> int:
+    result = cut_out_person(
+        args.input,
+        args.output,
+        config,
+        runner,
+        quality=args.quality,
+        device=args.device,
+        force=args.force,
     )
-    subcommands = parser.add_subparsers(dest="command", required=True)
-    subcommands.add_parser("doctor", help="Report the state of the local environment")
-    return parser
+    print(f"cutout written to {args.output}")
+    print(f"  model {result.model} on {result.provider}")
+    print(f"  {result.frames_processed} frames at {result.ms_per_frame:.0f} ms/frame")
+    print(f"  alpha channel present: {result.media.has_alpha}")
+    return 0
+
+
+def _run_backdrop(args: argparse.Namespace, config: Config, runner: KinoRunner) -> int:
+    result = place_on_backdrop(
+        args.input,
+        args.bg,
+        args.output,
+        config,
+        runner,
+        width=args.width,
+        height=args.height,
+        scale=args.scale,
+        opacity=args.opacity,
+        force=args.force,
+    )
+    print(f"composite written to {args.output}")
+    print(f"  canvas {result.canvas_width}x{result.canvas_height}")
+    print(f"  spec kept at {result.spec_path}")
+    if result.backdrop_was_shorter:
+        print("  warning: the backdrop video is shorter than the subject")
+    return 0
+
+
+def _run_filter(args: argparse.Namespace, config: Config, runner: KinoRunner) -> int:
+    if args.second_look is None:
+        info = apply_look(args.input, args.output, args.look, config, runner, force=args.force)
+    else:
+        info = apply_look_chain(
+            args.input, args.output, args.look, args.second_look, config, runner, force=args.force
+        )
+    print(f"look written to {args.output} ({info.width}x{info.height})")
+    return 0
+
+
+def _run_music(args: argparse.Namespace, config: Config, _runner: KinoRunner) -> int:
+    result = add_music_bed(
+        args.input,
+        args.track,
+        args.output,
+        config,
+        target_lufs=args.target_lufs,
+        music_volume=args.music_volume,
+        loop=args.loop,
+        force=args.force,
+    )
+    print(f"mix written to {args.output}")
+    print(f"  measured loudness {result.measured_lufs:.1f} LUFS (target {args.target_lufs})")
+    print(f"  ducking engaged: {result.ducking_engaged}")
+    return 0
+
+
+def _run_short(args: argparse.Namespace, config: Config, runner: KinoRunner) -> int:
+    result = to_short(
+        args.input,
+        args.output,
+        config,
+        runner,
+        aspect_ratio=args.aspect,
+        quality=args.quality,
+        thumbnail=args.thumbnail,
+        fail_on_warning=args.fail_on_warning,
+        force=args.force,
+    )
+    print(f"short written to {args.output} ({result.info.width}x{result.info.height})")
+    if result.thumbnail_path is not None:
+        print(f"  thumbnail {result.thumbnail_path}")
+    print(f"  quality score {result.quality_report.overall_score:.0f}")
+    for check in result.quality_report.checks:
+        if not check.passed:
+            print(f"  warning: {check.name}: {check.message}")
+    return 0
+
+
+HANDLERS = {
+    "cutout": _run_cutout,
+    "backdrop": _run_backdrop,
+    "filter": _run_filter,
+    "music": _run_music,
+    "short": _run_short,
+    "pipeline": _run_pipeline,
+}
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -45,13 +228,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         config = load_config()
+        runner = KinoRunner.from_config(config)
         if args.command == "doctor":
-            return _report_doctor(config)
+            return _report_doctor(config, runner)
+        handler = HANDLERS.get(args.command)
+        if handler is None:
+            parser.error(f"unhandled command: {args.command}")
+        return handler(args, config, runner)
     except MediaLabError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    parser.error(f"unhandled command: {args.command}")
-    return 2
 
 
 if __name__ == "__main__":
