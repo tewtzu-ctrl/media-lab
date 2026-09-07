@@ -241,11 +241,17 @@ sunt ambele grele). Fără estimare mai precisă până nu rulează efectiv.
 - [x] Etapa 2 — 6 fundaluri pregătite (offset-uri: TS 3.0s, Tower 5.0s, Shanghai 3.0s, Shibuya 4.0s, Arc still, Desert 4.0s) (`work/punto-edit/02-bg-0N.mov`)
 - [x] Etapa 3a — Concatenare fundaluri (192 cadre / 6.4s) (`work/punto-edit/03-background-track.mov`)
 - [x] Etapa 3b — Compositing (193 cadre / 6.433333s) (`work/punto-edit/04-composed.mov`)
-- [ ] **STOP** — verificare vizuală 6 cadre, aprobare Teo  <-- AICI SUNTEM
-- [ ] Etapa 4 — Interpolare 30→60fps + H.264 CRF 17 (`out/punto-final_2160x3840_60fps_h264-crf17.mp4`)
+- [x] STOP verificare vizuală — trecut; Teo a cerut și placarda (scope nou)
+- [~] Etapa 4 — Interpolare 30→60fps + H.264 CRF 17 (rulează)
 - [ ] QC final (ffprobe + verify-render)
 
 ### Note de execuție
 - Se lucrează în `~/dev/media-lab` (proiectul media-lab existent). Intermediari în `work/punto-edit/`, livrare în `out/`.
 - `ffmpeg`/`ffprobe`: binarele statice din `./bin/` (nu sunt pe PATH — se rulează cu `PATH="$PWD/bin:$PATH"`).
 - `kino`: din `.venv` a proiectului.
+
+### Devieri față de planul original (cerute de Teo pe parcurs)
+- **Placardă reintrodusă.** `u2net_human_seg` taie panoul ținut în mâini. Ales: PNG recreat fidel (whiteboard alb, ramă gri, scris handwritten albastru — font Bradley Hand), text `M-A TRIMIS / ȘEFUL / SĂ ADUC / CLIENȚI / — / PUNTO`, poziționat pe traiectorie măsurată automat (centroid de alb, 26 puncte). Fișier: `work/punto-edit/placard/placard.png`. Compositing în `04b-composed-placard.mov` (Etapa 3c nouă). Tracking OK pe 5/6 segmente; la ~2–2.5s panoul plutește ~150px peste mâini.
+- **Alfa cutout curățat** (`01-cutout-clean.mov`): erosion×2 + boxblur pe canalul alfa, ca să scadă haloul întunecat de pe brațe pe fundaluri deschise.
+- **Segment 4 (Shibuya) re-tăiat** la offset 8.0s (față de 4.0s) — sursa e integral macro cu profunzime mică pe picioare/trecere, nu are cadru larg; 8.0s se citește cel mai bine.
+- **Fix plan:** opțiunea `minterpolate` e `vsbmc`, nu `vsbmd` (typo în planul aprobat).
