@@ -277,3 +277,11 @@ Probleme cunoscute (test):
 QC: H.264 High, 2160x3840, yuv420p, 60fps, fara audio. verify-render: ok / 0 probleme.
 Imbunatatiri vs varianta respinsa: placarda parte din siluromata (nu mai deraiaza), subiect grounded (talpi pe strada/iarba/nisip), umbra de contact, culoare potrivita per fundal, 3 fundaluri toate cu sol.
 Limitari ramase: tot vizibil compositing la inspectie apropiata (sursa 720p, placi statice, fara relighting AI); ghosting usor de interpolare pe Times Square ~0.3s; grounding aproximativ pe duna inclinata; 6.45s (~3 cadre pierdute la coada de minterpolate).
+
+### Rework v4/v5 (feedback: "pare ca merge prin aer", cere grounding real)
+- **Foot-lock**: `work/punto-edit/isnet/place.py` detecteaza per cadru pixelul opac cel mai de jos (talpa de sprijin), pre-pozitioneaza subiectul pe canvas 2160x3840 astfel incat talpa sa cada exact pe linia solului in fiecare cadru. Piciorul de sprijin sta pe loc, corpul se leagana deasupra -> mers real, nu plutire.
+- **Umbra care urmareste talpile**: bakuita pe canvas sub persoana, in doua straturi (contact AO stramt + falloff moale).
+- **Desert**: re-esantionat la offset 14s + decupaj jos (scale 4600 -> crop y760) pentru teren plat cu urme de pasi, in loc de panta abrupta.
+- **Arc**: subiect mutat 150px stanga, pe iarba libera langa tufis.
+- Scara redusa 1.92 -> 1.80; potrivire de culoare + luminozitate per segment.
+- Compositing: `04-composed-v5.mov` -> interpolare + export.
