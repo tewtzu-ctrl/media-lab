@@ -242,8 +242,8 @@ sunt ambele grele). Fără estimare mai precisă până nu rulează efectiv.
 - [x] Etapa 3a — Concatenare fundaluri (192 cadre / 6.4s) (`work/punto-edit/03-background-track.mov`)
 - [x] Etapa 3b — Compositing (193 cadre / 6.433333s) (`work/punto-edit/04-composed.mov`)
 - [x] STOP verificare vizuală — trecut; Teo a cerut și placarda (scope nou)
-- [~] Etapa 4 — Interpolare 30→60fps + H.264 CRF 17 (rulează)
-- [ ] QC final (ffprobe + verify-render)
+- [x] Etapa 4 — Interpolare 30→60fps + H.264 CRF 17 (me=ds rapid; 8:30)
+- [x] QC final — ffprobe OK (2160x3840, 60fps, H.264 High, yuv420p, fara audio, 6.383s), verify-render ok/0 probleme
 
 ### Note de execuție
 - Se lucrează în `~/dev/media-lab` (proiectul media-lab existent). Intermediari în `work/punto-edit/`, livrare în `out/`.
@@ -255,3 +255,13 @@ sunt ambele grele). Fără estimare mai precisă până nu rulează efectiv.
 - **Alfa cutout curățat** (`01-cutout-clean.mov`): erosion×2 + boxblur pe canalul alfa, ca să scadă haloul întunecat de pe brațe pe fundaluri deschise.
 - **Segment 4 (Shibuya) re-tăiat** la offset 8.0s (față de 4.0s) — sursa e integral macro cu profunzime mică pe picioare/trecere, nu are cadru larg; 8.0s se citește cel mai bine.
 - **Fix plan:** opțiunea `minterpolate` e `vsbmc`, nu `vsbmd` (typo în planul aprobat).
+
+### Rezultat final
+`out/punto-final_2160x3840_60fps_h264-crf17.mp4` — 30.5 MB, 383 cadre.
+QC hard: trecut tot. Durata 6.383s (3 cadre sub sursa, minterpolate taie coada; in ±0.1s din plan).
+
+Probleme cunoscute (test):
+1. Placarda se detaseaza de maini in ~2.0-2.7s (varful saltului) si la coada ~6.2s+.
+2. Warp usor pe membre din interpolarea rapida (me=ds), mai vizibil pe Shibuya si ultima ~0.3s.
+3. Fundal Shibuya moale — sursa e integral macro cu profunzime mica, fara cadru larg.
+4. Tranzitiile intre fundaluri: curate, fara cadru-gunoi (scd a functionat).
