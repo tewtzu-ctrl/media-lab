@@ -284,4 +284,4 @@ Limitari ramase: tot vizibil compositing la inspectie apropiata (sursa 720p, pla
 - **Desert**: re-esantionat la offset 14s + decupaj jos (scale 4600 -> crop y760) pentru teren plat cu urme de pasi, in loc de panta abrupta.
 - **Arc**: subiect mutat 150px stanga, pe iarba libera langa tufis.
 - Scara redusa 1.92 -> 1.80; potrivire de culoare + luminozitate per segment.
-- Compositing: `04-composed-v5.mov` -> interpolare + export.
+- Compositing: `04-composed-v5.mov`. Final: `out/punto-final_2160x3840_60fps_h264-crf17.mp4` 26.7MB, 383 cadre, 6.383s. QC + verify-render: trecut.
