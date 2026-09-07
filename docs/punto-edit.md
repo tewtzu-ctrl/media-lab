@@ -237,11 +237,11 @@ sunt ambele grele). Fără estimare mai precisă până nu rulează efectiv.
 
 ## Progres execuție (bifat pe măsură ce rulează)
 
-- [ ] Etapa 1 — Cutout persoană (`work/punto-edit/01-cutout.mov`)
-- [ ] Etapa 2 — 6 fundaluri pregătite (`work/punto-edit/02-bg-0N.mov`)
-- [ ] Etapa 3a — Concatenare fundaluri (`work/punto-edit/03-background-track.mov`)
-- [ ] Etapa 3b — Compositing (`work/punto-edit/04-composed.mov`)
-- [ ] **STOP** — verificare vizuală 6 cadre, aprobare Teo
+- [x] Etapa 1 — Cutout persoană (`work/punto-edit/01-cutout.mov`)
+- [x] Etapa 2 — 6 fundaluri pregătite (offset-uri: TS 3.0s, Tower 5.0s, Shanghai 3.0s, Shibuya 4.0s, Arc still, Desert 4.0s) (`work/punto-edit/02-bg-0N.mov`)
+- [x] Etapa 3a — Concatenare fundaluri (192 cadre / 6.4s) (`work/punto-edit/03-background-track.mov`)
+- [x] Etapa 3b — Compositing (193 cadre / 6.433333s) (`work/punto-edit/04-composed.mov`)
+- [ ] **STOP** — verificare vizuală 6 cadre, aprobare Teo  <-- AICI SUNTEM
 - [ ] Etapa 4 — Interpolare 30→60fps + H.264 CRF 17 (`out/punto-final_2160x3840_60fps_h264-crf17.mp4`)
 - [ ] QC final (ffprobe + verify-render)
 
