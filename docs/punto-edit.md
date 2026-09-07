@@ -271,3 +271,9 @@ Probleme cunoscute (test):
 - **Redus la 3 fundaluri, toate cu sol**: Times Square, Arc de Triumf, Deșert. Tower Bridge + Shanghai **eliminate** — ambele surse sunt filmate de peste râu, apă pe tot cadrul, niciun mal; nu se putea „merge pe trotuar". Shibuya eliminat — sursa e macro blurat pe picioare, fără linie de sol utilizabilă. Segmente 2.144s.
 - **Grounding per segment**: subiect scalat 1380×2453, poziționat pe linia solului măsurată (TS y3200, Arc y3400, Deșert y3300), umbră de contact (PNG eliptic, alfa 0.42), potrivire de culoare per fundal (eq + colorbalance).
 - Compositing: `04-composed-v3.mov`. Interpolare + export peste el.
+
+### Rezultat final v3
+`out/punto-final_2160x3840_60fps_h264-crf17.mp4` — 26 MB, 384 cadre, 6.45s.
+QC: H.264 High, 2160x3840, yuv420p, 60fps, fara audio. verify-render: ok / 0 probleme.
+Imbunatatiri vs varianta respinsa: placarda parte din siluromata (nu mai deraiaza), subiect grounded (talpi pe strada/iarba/nisip), umbra de contact, culoare potrivita per fundal, 3 fundaluri toate cu sol.
+Limitari ramase: tot vizibil compositing la inspectie apropiata (sursa 720p, placi statice, fara relighting AI); ghosting usor de interpolare pe Times Square ~0.3s; grounding aproximativ pe duna inclinata; 6.45s (~3 cadre pierdute la coada de minterpolate).
