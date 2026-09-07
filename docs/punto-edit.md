@@ -265,3 +265,9 @@ Probleme cunoscute (test):
 2. Warp usor pe membre din interpolarea rapida (me=ds), mai vizibil pe Shibuya si ultima ~0.3s.
 3. Fundal Shibuya moale — sursa e integral macro cu profunzime mica, fara cadru larg.
 4. Tranzitiile intre fundaluri: curate, fara cadru-gunoi (scd a functionat).
+
+### Rework v3 (feedback Teo: "zboară", "se vede că nu e acolo", "placarda deraiază")
+- **Matte nou cu `rembg` / `isnet-general-use`** (venv izolat `work/punto-edit/.matte-venv`, model 179MB local, aprobat de Teo): scoate **persoana + placarda ca un singur matte**. Placarda nu mai e strat separat, e blocată de mâini din sursă. `01-cutout-isnet.mov`.
+- **Redus la 3 fundaluri, toate cu sol**: Times Square, Arc de Triumf, Deșert. Tower Bridge + Shanghai **eliminate** — ambele surse sunt filmate de peste râu, apă pe tot cadrul, niciun mal; nu se putea „merge pe trotuar". Shibuya eliminat — sursa e macro blurat pe picioare, fără linie de sol utilizabilă. Segmente 2.144s.
+- **Grounding per segment**: subiect scalat 1380×2453, poziționat pe linia solului măsurată (TS y3200, Arc y3400, Deșert y3300), umbră de contact (PNG eliptic, alfa 0.42), potrivire de culoare per fundal (eq + colorbalance).
+- Compositing: `04-composed-v3.mov`. Interpolare + export peste el.
