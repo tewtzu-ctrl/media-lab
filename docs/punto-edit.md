@@ -337,3 +337,4 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 - O singura locatie coerenta. 30fps nativ, fara interpolare, fara camera move. Grade + atmosfera + grain slab.
 - Unelte folosite: agent general-purpose (research matting + stock), RVM, Real-ESRGAN, Pexels.
 - v17e: stronger crowd integration - subject buried waist-down behind front-row crowd (feathered occlusion), muted+desaturated+softened to match the overcast street, scaled to crowd depth. Reads as one person in the throng holding the sign up.
+- v18b: full-body front-row crowd figure, legs+feet visible on the cobbles, no occlusion strip, less desaturated (sat 0.90), lighter edge blur, foot shadow shadow_a=78.
