@@ -338,3 +338,4 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 - Unelte folosite: agent general-purpose (research matting + stock), RVM, Real-ESRGAN, Pexels.
 - v17e: stronger crowd integration - subject buried waist-down behind front-row crowd (feathered occlusion), muted+desaturated+softened to match the overcast street, scaled to crowd depth. Reads as one person in the throng holding the sign up.
 - v18b: full-body front-row crowd figure, legs+feet visible on the cobbles, no occlusion strip, less desaturated (sat 0.90), lighter edge blur, foot shadow shadow_a=78.
+- v20: full-body FRONT-ROW crowd member - same scale + same ground plane (feet y3720) as the nearest people, 3-layer contact shadow on the cobbles, tighter foot-pin (+-2 median), minimal occlusion (bottom 170px). Reads as walking WITH the crowd at their level, feet on the ground.
