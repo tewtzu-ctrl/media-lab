@@ -339,3 +339,4 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 - v17e: stronger crowd integration - subject buried waist-down behind front-row crowd (feathered occlusion), muted+desaturated+softened to match the overcast street, scaled to crowd depth. Reads as one person in the throng holding the sign up.
 - v18b: full-body front-row crowd figure, legs+feet visible on the cobbles, no occlusion strip, less desaturated (sat 0.90), lighter edge blur, foot shadow shadow_a=78.
 - v20: full-body FRONT-ROW crowd member - same scale + same ground plane (feet y3720) as the nearest people, 3-layer contact shadow on the cobbles, tighter foot-pin (+-2 median), minimal occlusion (bottom 170px). Reads as walking WITH the crowd at their level, feet on the ground.
+- v23: NYC bg (Wall St, NYPD cars, open asphalt foreground). RIGID foot pin (single fixed ground y for whole clip). Firm asphalt shadow. Person walks in the open foreground on the crosswalk, crowd+police behind.
