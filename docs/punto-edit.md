@@ -336,3 +336,4 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 - **Ocluzie de adancime**: randul din front al multimii (banda de jos a fundalului, top feather 170px) re-suprapus PESTE subiect -> oamenii din fata trec prin fata ei. Ea la scara multimii de la adancimea ei (base_scale 0.72, ground 3070).
 - O singura locatie coerenta. 30fps nativ, fara interpolare, fara camera move. Grade + atmosfera + grain slab.
 - Unelte folosite: agent general-purpose (research matting + stock), RVM, Real-ESRGAN, Pexels.
+- v17e: stronger crowd integration - subject buried waist-down behind front-row crowd (feathered occlusion), muted+desaturated+softened to match the overcast street, scaled to crowd depth. Reads as one person in the throng holding the sign up.
