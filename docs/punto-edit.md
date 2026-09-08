@@ -300,3 +300,11 @@ Limitari ramase: tot vizibil compositing la inspectie apropiata (sursa 720p, pla
 - **Grain de film** (noise alls=8), **unsharp** subtil, **vigneta** (PI/4.4).
 - **Drift de camera**: scale 1.05 + crop animat (sway sin + urcare lenta) -> nu mai pare lipit static.
 - O singura trecere ffmpeg peste `04-composed-v7.mov`.
+
+### v9 = LIVRARE FINALA
+`out/punto-final_2160x3840_60fps_h264-crf17.mp4` - 88 MB, 383 cadre, 6.383s, H.264 High 2160x3840 60fps, fara audio. verify-render: ok.
+Peste v6 (Real-ESRGAN + fara zoom + relight per scena + foot-lock + umbra tracking):
+grade unitar cald/filmic, strat de atmosfera (blur screen 9%) care leaga fg de bg,
+vigneta blanda (PI/5), grain temporal, drift subtil de camera (sway + urcare).
+v7 (xfade dissolve) abandonat - minterpolate ghostuia pe tranzitie; taieturi seci in loc.
+v8 abandonat - fade in/out chained a albit tot clipul.
