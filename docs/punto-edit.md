@@ -308,3 +308,12 @@ grade unitar cald/filmic, strat de atmosfera (blur screen 9%) care leaga fg de b
 vigneta blanda (PI/5), grain temporal, drift subtil de camera (sway + urcare).
 v7 (xfade dissolve) abandonat - minterpolate ghostuia pe tranzitie; taieturi seci in loc.
 v8 abandonat - fade in/out chained a albit tot clipul.
+
+### v10 = LIVRARE FINALA (feedback: fara speed/interpolare, fara miscare camera, doar fundaluri de la nivelul solului f2f)
+`out/punto-final_2160x3840_30fps_h264-crf17.mp4` (+ copie pe ~/Desktop/punto-final.mp4) - 195 MB, 192 cadre, 6.433s, H.264 High 2160x3840, **30fps NATIV (fara minterpolate)**, fara audio. verify-render: ok.
+- **Doar 2 fundaluri**, ambele filmate de la nivelul solului, camera fixa, fata in fata: Times Square (stradal) + Arcul de Triumf (peluza). Desert eliminat (drona/aerian), Shibuya (macro pe picioare), Tower Bridge + Shanghai (de peste rau) - toate eliminate.
+- **Fara interpolare** -> miscare naturala, fara warp/"speed".
+- **Fara miscare de camera** -> cadru complet fix (fara zoom, fara sway).
+- Subiect: isnet + Real-ESRGAN x2, foot-lock pe minim glisant (piciorul de sprijin pinuit), no-zoom (inaltime constanta), centrat pe X (fara drift stanga-dreapta), scara mai mare (prim-plan), relight per scena, umbra de contact.
+- Grade unitar usor + atmosfera (screen 8%) + grain temporal slab + vigneta blanda (PI/5.5). Fara efecte de miscare.
+- Limitare ramasa: usoara "saltare" a corpului intre pasi pe unele cadre; tot vizibil compositing la inspectie apropiata (sursa 720p, placi statice, fara relighting AI).
