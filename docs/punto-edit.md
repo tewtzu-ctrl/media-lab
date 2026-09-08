@@ -317,3 +317,9 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 - Subiect: isnet + Real-ESRGAN x2, foot-lock pe minim glisant (piciorul de sprijin pinuit), no-zoom (inaltime constanta), centrat pe X (fara drift stanga-dreapta), scara mai mare (prim-plan), relight per scena, umbra de contact.
 - Grade unitar usor + atmosfera (screen 8%) + grain temporal slab + vigneta blanda (PI/5.5). Fara efecte de miscare.
 - Limitare ramasa: usoara "saltare" a corpului intre pasi pe unele cadre; tot vizibil compositing la inspectie apropiata (sursa 720p, placi statice, fara relighting AI).
+
+### v11 = LIVRARE (feedback: goluri pe ea/pancarda cand merge; adauga desert f2f; sol in fiecare cadru)
+- **Matte curatat** (`isnet/mattefix.py`): median temporal +-2 cadre (omoara flickerul + reface bucatile pe care matte-ul per-cadru le pierde izolat) + umplere gauri inchise + dilatare 3px (inchide golul de la jonctiunea mana-pancarda). Fara filtrare de componente (aia taia pancarda/rupea corpul).
+- **Desert readaugat**, filmat de la sol / fata in fata: clip nou Pixabay (`cand-a.mp4` -> `desert-ground.jpg` cadru static), tonat mai putin portocaliu. 3 fundaluri, toate sol: TS (trecere) + Arc (peluza) + Desert (dune).
+- Pastreaza tot din v10: 30fps nativ (fara interpolare), cadru fix (fara zoom/sway), no-zoom, centrat pe X, relight per scena, foot-lock, umbra.
+- Limitare ramasa: usoara saltare a corpului intre pasi pe cateva cadre; placa de desert e neteda (posibil 3D render).
