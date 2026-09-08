@@ -329,3 +329,10 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 - v14: Times Square segment slowed ~6.2x (setpts+minterpolate) to natural speed - "totul zboara" fixed. Other 2 segments unchanged.
 - v15: matte fills only small holes (< 16000 px); the enclosed gap between the raised arms stays transparent so the real background shows through, not a patch of the source park.
 - v16: single coherent location (Times Square crossing), hyperlapse de-sped 6x with mi_mode=blend (no pedestrian warping), single-segment placement, softened subtle contact shadow, arm-gap-transparent matte.
+
+### v17 = LIVRARE (agent-assisted: RVM matting + real-time portrait crowd)
+- **Matte: RVM (Robust Video Matting, resnet50)** in loc de isnet+mattefix. Recurent -> stabil temporal, zero flicker/goluri, pastreaza placarda. 32s pentru 193 cadre pe MPS. `work/punto-edit/rvm/` -> Real-ESRGAN x2 -> `work/punto-edit/rvm_up/`.
+- **Fundal: clip Pexels portret 1440x2560 REAL-TIME** cu multime pe strada comerciala (Istanbul), scalat 1.5x -> 2160x3840. Timp real => fara retiming => fara "oameni care apar/dispar". `in/backgrounds/crowd-portrait.mp4`.
+- **Ocluzie de adancime**: randul din front al multimii (banda de jos a fundalului, top feather 170px) re-suprapus PESTE subiect -> oamenii din fata trec prin fata ei. Ea la scara multimii de la adancimea ei (base_scale 0.72, ground 3070).
+- O singura locatie coerenta. 30fps nativ, fara interpolare, fara camera move. Grade + atmosfera + grain slab.
+- Unelte folosite: agent general-purpose (research matting + stock), RVM, Real-ESRGAN, Pexels.
