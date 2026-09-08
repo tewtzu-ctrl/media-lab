@@ -292,3 +292,11 @@ Limitari ramase: tot vizibil compositing la inspectie apropiata (sursa 720p, pla
 - **Fara zoom**: `place2.py` normalizeaza inaltimea subiectului per cadru (clamp 0.90-1.11) -> nu mai "creste" spre camera.
 - **Relight per scena (manual, scene-aware)**: gradient directional key/fill dupa directia soarelui, culoare ambientala, "bounce" de la sol (asfalt gri / iarba verde / nisip), umbra de contact offset dupa soare.
 - Compositing: `04-composed-v6.mov`. Final: `out/punto-final_2160x3840_60fps_h264-crf17.mp4` 27MB, 383 cadre, 6.383s. QC + verify-render: trecut.
+
+### v7 - pas de finisaj "produs" (feedback: "din topor", vrea pregatit de social media)
+- **Tranzitii**: xfade dissolve 0.4s intre cele 3 locatii; subiectul ramane continuu (lumea se schimba in spatele ei).
+- **Grade unitar** pe tot: eq (contrast/saturatie/gamma), colorbalance cald, s-curve filmica prin curves.
+- **Atmosfera/diffusion**: copie blurata (sigma 42) screen-uita la 10% peste tot -> leaga fg de bg, ascunde marginea de decupaj.
+- **Grain de film** (noise alls=8), **unsharp** subtil, **vigneta** (PI/4.4).
+- **Drift de camera**: scale 1.05 + crop animat (sway sin + urcare lenta) -> nu mai pare lipit static.
+- O singura trecere ffmpeg peste `04-composed-v7.mov`.
