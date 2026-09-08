@@ -323,3 +323,6 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 - **Desert readaugat**, filmat de la sol / fata in fata: clip nou Pixabay (`cand-a.mp4` -> `desert-ground.jpg` cadru static), tonat mai putin portocaliu. 3 fundaluri, toate sol: TS (trecere) + Arc (peluza) + Desert (dune).
 - Pastreaza tot din v10: 30fps nativ (fara interpolare), cadru fix (fara zoom/sway), no-zoom, centrat pe X, relight per scena, foot-lock, umbra.
 - Limitare ramasa: usoara saltare a corpului intre pasi pe cateva cadre; placa de desert e neteda (posibil 3D render).
+
+### v13 = LIVRARE (feedback: fundaluri animate cu oameni, viteza normala, zi normala; desert f2f de la sol)
+3 fundaluri, toate video real-time la zi cu viata: Times Square (multime/trafic) + strada Broadway NYC `street-real.mp4` (trafic, autobuz scolar) + Sahara reala `sahara-real.mp4` (nisip cu urme, om care merge in fundal, cer). Shibuya-macro si desert-3D eliminate. Sahara stabilizata (vidstab) ca sa fie cadru fix. Pastreaza: 30fps nativ, fara interpolare, fara camera move, hard foot-pin, matte curatat (mattefix WIN3 + foot extension).
