@@ -291,4 +291,4 @@ Limitari ramase: tot vizibil compositing la inspectie apropiata (sursa 720p, pla
 - **Real-ESRGAN x2** (`work/punto-edit/gen/upscale.py`, `RealESRGAN_x2plus.pth`) pe cele 193 de cadre isnet -> 1440x2560, subiect vizibil mai clar. ~18 min. (shim `torchvision/transforms/functional_tensor.py` adaugat in .venv pentru basicsr).
 - **Fara zoom**: `place2.py` normalizeaza inaltimea subiectului per cadru (clamp 0.90-1.11) -> nu mai "creste" spre camera.
 - **Relight per scena (manual, scene-aware)**: gradient directional key/fill dupa directia soarelui, culoare ambientala, "bounce" de la sol (asfalt gri / iarba verde / nisip), umbra de contact offset dupa soare.
-- Compositing: `04-composed-v6.mov` -> interpolare + export.
+- Compositing: `04-composed-v6.mov`. Final: `out/punto-final_2160x3840_60fps_h264-crf17.mp4` 27MB, 383 cadre, 6.383s. QC + verify-render: trecut.
