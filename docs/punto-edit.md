@@ -327,3 +327,4 @@ v8 abandonat - fade in/out chained a albit tot clipul.
 ### v13 = LIVRARE (feedback: fundaluri animate cu oameni, viteza normala, zi normala; desert f2f de la sol)
 3 fundaluri, toate video real-time la zi cu viata: Times Square (multime/trafic) + strada Broadway NYC `street-real.mp4` (trafic, autobuz scolar) + Sahara reala `sahara-real.mp4` (nisip cu urme, om care merge in fundal, cer). Shibuya-macro si desert-3D eliminate. Sahara stabilizata (vidstab) ca sa fie cadru fix. Pastreaza: 30fps nativ, fara interpolare, fara camera move, hard foot-pin, matte curatat (mattefix WIN3 + foot extension).
 - v14: Times Square segment slowed ~6.2x (setpts+minterpolate) to natural speed - "totul zboara" fixed. Other 2 segments unchanged.
+- v15: matte fills only small holes (< 16000 px); the enclosed gap between the raised arms stays transparent so the real background shows through, not a patch of the source park.
